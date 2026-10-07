@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Đại Đạo Tu Tiên - H5 Offline Engine</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Cinzel+Decorative:wght@700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-core: #080a0d;
+      --panel-dark: rgba(14, 18, 24, 0.95);
+      --panel-border: #283340;
+      --panel-border-light: rgba(212, 175, 55, 0.25);
+      --gold-main: #d4af37;
+      --gold-bright: #f3e5ab;
+      --gold-glow: rgba(212, 175, 55, 0.2);
+      --cyan-soft: #5cdbd3;
+      --text-main: #e2e8f0;
+      --text-muted: #8c9ba5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Be Vietnam Pro', 'Noto Serif', serif;
+    }
+
+    body {
+      background-color: #030406;
+      background-image: radial-gradient(circle at 50% 20%, #151d26 0%, #030406 85%);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 460px;
+      height: 100vh;
+      max-height: 900px;
+      background: linear-gradient(180deg, #10151c 0%, #080a0d 100%);
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-bar {
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 13, 17, 0.95);
+      border-bottom: 1px solid var(--panel-border);
+      z-index: 10;
+    }
+    .char-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .char-name {
+      font-weight: 700;
+      color: var(--gold-bright);
+      font-size: 13.5px;
+      letter-spacing: 0.5px;
+    }
+    .char-realm {
+      font-size: 11px;
+      color: var(--cyan-soft);
+      font-weight: 500;
+    }
+    .currency-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--gold-bright);
+    }
+
+    .pillar-nav-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(10, 14, 19, 0.95);
+      border-bottom: 1px solid #1f2732;
+      z-index: 20;
+      position: relative;
+    }
+
+    .pillar-btn {
+      background: linear-gradient(180deg, #161c24 0%, #0d1217 100%);
+      border: 1px solid #2d3846;
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 7px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .pillar-btn.active, .pillar-btn:hover {
+      color: var(--gold-bright);
+      border-color: var(--gold-main);
+      background: rgba(212, 175, 55, 0.12);
+    }
+
+    .drawer-panel {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: rgba(12, 16, 22, 0.98);
+      border-bottom: 1.5px solid var(--gold-main);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85);
+      padding: 10px 14px;
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      z-index: 30;
+      backdrop-filter: blur(8px);
+      animation: slideDown 0.2s ease-out;
+    }
+
+    .drawer-panel.open {
+      display: grid;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .sub-item-btn {
+      background: #151b22;
+      border: 1px solid #283341;
+      color: #cbd5e1;
+      font-size: 11px;
+      padding: 8px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .sub-item-btn:active {
+      border-color: var(--gold-main);
+      color: var(--gold-bright);
+      background: #1f2732;
+    }
+
+    .hero-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 15px 10px;
+      text-align: center;
+      background-size: cover;
+      background-position: center bottom;
+      background-repeat: no-repeat;
+      transition: background-image 0.5s ease-in-out;
+      overflow: hidden;
+    }
+
+    .hero-stage::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, rgba(10, 14, 20, 0.4) 0%, rgba(5, 7, 10, 0.85) 90%);
+      z-index: 1;
+    }
+
+    .sect-title, .quote-text, .companion-strip {
+      position: relative;
+      z-index: 3;
+    }
+    .sect-title {
+      font-size: 13px;
+      color: var(--gold-bright);
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      background: rgba(0,0,0,0.5);
+      padding: 3px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(212,175,55,0.3);
+    }
+    .quote-text {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 170px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .avatar-aura {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);
+      animation: pulseAura 4s infinite ease-in-out;
+      z-index: 1;
+    }
+
+    @keyframes pulseAura {
+      0%, 100% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.08); opacity: 0.9; }
+    }
+
+    .avatar-live-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+      z-index: 2;
+      animation: floatMeditation 4s infinite ease-in-out;
+    }
+
+    @keyframes floatMeditation {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .companion-strip {
+      position: absolute;
+      width: 90%;
+      display: flex;
+      justify-content: space-between;
+      bottom: 12px;
+    }
+    .sub-slot-tag {
+      background: rgba(15, 20, 26, 0.9);
+      border: 1px solid #2d3846;
+      border-radius: 5px;
+      padding: 5px 9px;
+      font-size: 10px;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.2s;
+    }
+    .sub-slot-tag b {
+      color: var(--gold-bright);
+      font-size: 10.5px;
+    }
+
+    .status-log-box {
+      margin: 0 12px 6px;
+      background: rgba(14, 18, 24, 0.9);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      min-height: 52px;
+      max-height: 75px;
+      overflow-y: auto;
+      line-height: 1.45;
+      color: #cbd5e1;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .exp-bar-section {
+      padding: 0 12px 6px;
+    }
+    .exp-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+    .exp-track {
+      width: 100%;
+      height: 7px;
+      background: #141920;
+      border-radius: 4px;
+      border: 1px solid #242f3d;
+      overflow: hidden;
+    }
+    .exp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #966b1e, #d4af37);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+      transition: width 0.2s ease-out;
+      width: 0%;
+    }
+
+    .action-dock {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 8px 12px 12px;
+      background: rgba(8, 10, 14, 0.98);
+      border-top: 1px solid var(--panel-border);
+    }
+    .act-btn {
+      background: linear-gradient(180deg, #19202a 0%, #11151c 100%);
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 10px 0;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      transition: all 0.15s;
+    }
+    .act-btn:active {
+      transform: translateY(1px);
+    }
+    .act-btn.primary {
+      background: linear-gradient(180deg, #7c5319 0%, #4a300a 100%);
+      border-color: var(--gold-main);
+      color: #fff;
+    }
+
+    .game-modal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(4, 6, 9, 0.95);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      padding: 14px;
+      backdrop-filter: blur(5px);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 10px;
+    }
+    .modal-title {
+      font-size: 13.5px;
+      color: var(--gold-bright);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 6px;
+    }
+    .modal-content {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 11.5px;
+    }
+    .map-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #121820;
+      border: 1px solid #232d3a;
+      padding: 9px 11px;
+      border-radius: 6px;
+      margin-bottom: 7px;
+    }
+
+    .equip-grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      padding: 2px;
+    }
+
+    .equip-slot-card {
+      background: linear-gradient(180deg, #141a22 0%, #0c1015 100%);
+      border: 1px solid #283341;
+      border-radius: 6px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 68px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .equip-slot-card:hover, .equip-slot-card.active {
+      border-color: var(--gold-main);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+    }
+
+    .slot-type-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 2px;
+    }
+
+    .slot-item-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-bright);
+      margin: 3px 0 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-item-empty {
+      font-size: 10.5px;
+      color: #64748b;
+      font-style: italic;
+      margin: 3px 0 1px;
+    }
+
+    .slot-btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .mini-btn {
+      background: #1e2632;
+      border: 1px solid #3b4859;
+      color: #cbd5e1;
+      font-size: 9.5px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      border-color: var(--gold-main);
+      color: var(--gold-bright);
+    }
+
+    /* Combat Screen Overlay */
+    .combat-box {
+      background: #101620;
+      border: 1px solid var(--gold-main);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .combat-hp-bar {
+      height: 8px;
+      background: #242f3d;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 4px 0 8px;
+    }
+    .combat-hp-fill {
+      height: 100%;
+      background: #ef4444;
+      transition: width 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <!-- 1. Header Bar -->
+    <div class="header-bar">
+      <div class="char-badge">
+        <span class="char-name" id="ui-char-name">Đang nạp...</span>
+        <span class="char-realm" id="ui-realm">Luyện Khí (Tầng 1)</span>
+        <span style="font-size: 10.5px; color: #f59e0b; font-weight: 700;">
+          ⚔️ Lực Chiến: <span id="ui-power-val" style="color: #fbbf24;">0</span>
+        </span>
+      </div>
+      <div class="currency-badge">
+        <span>💎 <b id="ui-stone">0</b> | 🪙 <b id="ui-gem">0</b></span>
+        <span>📍 <b id="ui-vidien">Phàm Nhân Giới</b></span>
+        <span id="ui-cloud-status" style="font-size: 9.5px; color: #10b981; cursor: pointer;" onclick="syncWithGoogleSheet()">☁️ Đã nạp (Chạm để Sync)</span>
+      </div>
+    </div>
+
+    <!-- 2. Thanh 4 Trụ Cột Điều Hướng -->
+    <div class="pillar-nav-bar">
+      <button class="pillar-btn" id="btn-col-tuvi" onclick="toggleDrawer('drawer-tuvi')">Tu Vi ▼</button>
+      <button class="pillar-btn" id="btn-col-tuchan" onclick="toggleDrawer('drawer-tuchan')">Tu Chân ▼</button>
+      <button class="pillar-btn" id="btn-col-theluc" onclick="toggleDrawer('drawer-theluc')">Thế Lực ▼</button>
+      <button class="pillar-btn" id="btn-col-lichluyen" onclick="toggleDrawer('drawer-lichluyen')">Lịch Luyện ▼</button>
+
+      <!-- 1. Menu sổ: Tu Vi -->
+      <div class="drawer-panel" id="drawer-tuvi">
+        <button class="sub-item-btn" onclick="closeAllDrawers(); openEquipModal();">Trang Bị</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showStatsModal();">Thuộc Tính</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); openModal('inv-modal');">Túi Trữ Vật</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doBequan();">Bế Quan</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doBreakthrough();">Xung Quan</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doXuatquan();">Thu Hoạch</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); openModal('skills-modal');">Thần Thông</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); exportSaveGame();">Xuất File Save</button>
+      </div>
+
+      <!-- 2. Menu sổ: Tu Chân -->
+      <div class="drawer-panel" id="drawer-tuchan">
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doGather();">Dược Điền</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); openModal('recipes-modal');">Luyện Đan</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Rèn Khí Các chuẩn bị khai lô.');">Rèn Khí</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Linh Thú Các đang phong ấn.');">Linh Thú</button>
+      </div>
+
+      <!-- 3. Menu sổ: Thế Lực -->
+      <div class="drawer-panel" id="drawer-theluc">
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Tông Môn đang tuyển mộ đệ tử!');">Tông Môn</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Thiên Kiêu Bảng ghi danh các cường giả.');">Thiên Kiêu</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Thương Minh Các đang gom linh thạch.');">Thương Minh</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Đạo Lữ chưa kết duyên.');">Đạo Lữ</button>
+      </div>
+
+      <!-- 4. Menu sổ: Lịch Luyện -->
+      <div class="drawer-panel" id="drawer-lichluyen">
+        <button class="sub-item-btn" onclick="closeAllDrawers(); openModal('map-modal');">Vạn Cảnh</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doHuntMonster();">Đấu Pháp</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); doReincarnate();">Luân Hồi</button>
+        <button class="sub-item-btn" onclick="closeAllDrawers(); showNotice('Bí Cảnh Thượng Cổ chưa mở lối.');">Bí Cảnh</button>
+      </div>
+    </div>
+
+    <!-- 3. Khu Vực Tịnh Tọa -->
+    <div class="hero-stage" id="ui-hero-stage">
+      <div class="sect-title" id="ui-sect">Tân Thủ Thôn</div>
+      <div class="quote-text">“Một kiếp vô danh — tu trong mộng lặng.”</div>
+      
+      <div class="avatar-wrapper">
+        <div class="avatar-aura"></div>
+        <img id="ui-avatar-img" class="avatar-live-img" src="https://i.postimg.cc/MpWRQ2k8/TL.png" alt="Tu Sĩ">
+      </div>
+
+      <div class="companion-strip">
+        <div class="sub-slot-tag" onclick="showNotice('Bản Mệnh Pháp Bảo: Tụ Linh Đỉnh')">
+          <span>Pháp Bảo</span>
+          <b id="ui-slot-art">Tụ Linh Đỉnh</b>
+        </div>
+        <div class="sub-slot-tag" onclick="showNotice('Linh Thú Đồng Hành: Kỳ Lân Lôi Điện')">
+          <span>Linh Thú</span>
+          <b>Lôi Kỳ Lân</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Khung Nhật Ký Trạng Thái -->
+    <div class="status-log-box" id="ui-status-text">
+      Đang Nhập Định, Vận Chuyển Huyền Công Theo Chu Thiên...
+    </div>
+
+    <!-- 5. Thanh Tu Vi / Nguyên Lực & Tốc Độ AFK -->
+    <div class="exp-bar-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; margin-bottom: 4px; padding: 3px 6px; background: rgba(255,255,255,0.03); border-radius: 4px; border: 1px solid #1f2833;">
+        <span style="color: var(--cyan-soft);" id="ui-afk-status">🍃 Tự nhiên nạp khí</span>
+        <span style="color: var(--gold-bright); font-weight: 600;" id="ui-afk-speed">+0 tu vi/phút</span>
+      </div>
+
+      <div class="exp-label-row">
+        <span>Nguyên Lực: <b id="ui-exp-text">0 / 1,000</b></span>
+        <span id="ui-exp-percent">0%</span>
+      </div>
+      <div class="exp-track">
+        <div class="exp-fill" id="ui-exp-fill"></div>
+      </div>
+    </div>
+
+    <!-- 6. Bộ Nút Cốt Lõi Dưới Cùng -->
+    <div class="action-dock">
+      <button class="act-btn primary" onclick="doBequan()">Tu Luyện</button>
+      <button class="act-btn primary" onclick="doBreakthrough()">Đột Phá</button>
+      <button class="act-btn" onclick="doHuntMonster()">Săn Quái</button>
+      <button class="act-btn" onclick="openModal('map-modal')">Bản Đồ</button>
+    </div>
+
+    <!-- MODAL TRANG BỊ -->
+    <div class="game-modal" id="equip-modal">
+      <div class="modal-header">
+        <span class="modal-title">⚔️ THẬP ĐẠI TRANG BỊ BẢN THỂ</span>
+        <button class="close-btn" onclick="closeModal('equip-modal')">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="equip-grid-container" id="equip-slots-box"></div>
+        <div id="equip-selector-panel" style="margin-top: 12px; display: none;">
+          <div style="font-size: 11.5px; font-weight: 600; color: var(--gold-bright); margin-bottom: 6px; border-top: 1px solid #283341; padding-top: 8px;">
+            Trang bị khả dụng cho: <span id="selected-slot-title" style="color: var(--cyan-soft);"></span>
+          </div>
+          <div id="available-items-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL BẢN ĐỒ -->
+    <div class="game-modal" id="map-modal">
+      <div class="modal-header">
+        <span class="modal-title">ĐẠI ĐẠO ĐỊA ĐỒ</span>
+        <button class="close-btn" onclick="closeModal('map-modal')">✕</button>
+      </div>
+      <div class="modal-content" id="map-list-container"></div>
+    </div>
+
+    <!-- MODAL TÚI ĐỒ -->
+    <div class="game-modal" id="inv-modal">
+      <div class="modal-header">
+        <span class="modal-title">TÚI TRỮ VẬT</span>
+        <button class="close-btn" onclick="closeModal('inv-modal')">✕</button>
+      </div>
+      <div class="modal-content" id="inv-list-container"></div>
+    </div>
+
+    <!-- MODAL THUỘC TÍNH -->
+    <div class="game-modal" id="stats-modal">
+      <div class="modal-header">
+        <span class="modal-title">BẢNG THUỘC TÍNH BẢN THỂ</span>
+        <button class="close-btn" onclick="closeModal('stats-modal')">✕</button>
+      </div>
+      <div class="modal-content" id="stats-content"></div>
+    </div>
+
+    <!-- MODAL CHIẾN ĐẤU (LOCAL COMBAT) -->
+    <div class="game-modal" id="combat-modal">
+      <div class="modal-header">
+        <span class="modal-title" id="combat-title">⚔️ ĐẤU PHÁP SINH TỬ</span>
+        <button class="close-btn" onclick="fleeCombat()">✕</button>
+      </div>
+      <div class="modal-content" id="combat-content">
+        <div id="combat-boss-zone" class="combat-box">
+          <div style="display:flex; justify-content:space-between; font-weight:600; color:var(--gold-bright);">
+            <span id="c-boss-name">Yêu Thú</span>
+            <span id="c-boss-hp-text">100 / 100</span>
+          </div>
+          <div class="combat-hp-bar"><div class="combat-hp-fill" id="c-boss-hp-fill" style="width:100%;"></div></div>
+        </div>
+
+        <div id="combat-player-zone" class="combat-box" style="border-color:#5cdbd3;">
+          <div style="display:flex; justify-content:space-between; font-weight:600; color:var(--cyan-soft);">
+            <span id="c-player-name">Tử Đoan</span>
+            <span id="c-player-hp-text">100 / 100</span>
+          </div>
+          <div class="combat-hp-bar"><div class="combat-hp-fill" id="c-player-hp-fill" style="background:#10b981; width:100%;"></div></div>
+        </div>
+
+        <div style="margin-top:10px; font-weight:600; color:var(--gold-bright);">Chọn Thần Thông Ra Đòn:</div>
+        <div id="combat-skill-buttons" style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:8px 0;"></div>
+        
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="act-btn" style="flex:1;" onclick="executeCombatTurn(null)">Đánh Thường</button>
+          <button class="act-btn" style="flex:1; background:#4a1515;" onclick="fleeCombat()">Độn Thổ (Bỏ Chạy)</button>
+        </div>
+
+        <div style="margin-top:10px; font-weight:600; color:#94a3b8;">Diễn Biến Trận Đánh:</div>
+        <div id="combat-log" style="background:#090d12; border:1px solid #1f2732; border-radius:6px; padding:8px; max-height:120px; overflow-y:auto; font-size:11px; margin-top:4px; line-height:1.5;"></div>
+      </div>
+    </div>
+
+    <!-- MODAL THẦN THÔNG -->
+    <div class="game-modal" id="skills-modal">
+      <div class="modal-header">
+        <span class="modal-title">THẦN THÔNG TU LUYỆN</span>
+        <button class="close-btn" onclick="closeModal('skills-modal')">✕</button>
+      </div>
+      <div class="modal-content" id="skills-list-container"></div>
+    </div>
+
+    <!-- MODAL LUYỆN ĐAN -->
+    <div class="game-modal" id="recipes-modal">
+      <div class="modal-header">
+        <span class="modal-title">LUYỆN ĐAN LÔ & RÈN KHÍ</span>
+        <button class="close-btn" onclick="closeModal('recipes-modal')">✕</button>
+      </div>
+      <div class="modal-content" id="recipes-list-container"></div>
+    </div>
+  </div>
+
+  <script>
+    // DỮ LIỆU ĐỒNG BỘ TỪ GOOGLE SHEET CỦA SẾP
+    const SYNC_URL = "https://script.google.com/macros/s/AKfycbxGIPPQSqznPvc_paht7nl2TfIDvItV6-jl7YfLnpKpTHJv5LLGD9JzjCgp_82cfWL2bA/exec";
+    
+    // EMBEDDED FALLBACK DATABASE TỪ FILE EXCEL GỐC (ĐẢM BẢO CHẠY NGAY CẢ KHI OFFLINE)
+    const EMBEDDED_DATABASE = {"state": {"TEN_NHAN_VAT": "Tử Đoan", "VI_DIEN": "Phàm Nhân Giới", "CANH_GIOI": "Kim Đan", "TANG": 4, "TU_VI": 1865431, "TU_VI_MAX": 920000, "HP": 50000, "HP_MAX": 50000, "MP": 25000, "MP_MAX": 25000, "ATK": 7300, "DEF": 3650, "MDEF": 3050, "TOC_DO": 82, "CHINH_XAC": 95, "NE_TRANH": 5, "CRIT": 10, "CRIT_DMG": 150, "XUYEN_GIAP": 0, "GIAM_ST": 0, "HOI_PHUC": 15, "LINH_THACH": 576, "TIEN_NGOC": 10, "VI_TRI_CHI_TIET": "Linh Tuyền Động", "CAN_FUSION_ITEM": true, "INVENTORY_SLOTS": 100, "TRANG_THAI_TU_LUYEN": "DANG_TU_LUYEN", "THOI_GIAN_BAT_DAU_TU": "2026-09-22T16:21:03.145Z", "MIN_BREAKTHROUGH_RATE": 80, "LAN_TRUNG_SINH": 0, "THOI_GIAN_CAP_NHAT_CUOI": "2026-09-22T16:21:03.145Z", "TOA_DO_X": -15, "TOA_DO_Y": 30, "AVATAR_URL": "https://i.postimg.cc/MpWRQ2k8/TL.png", "BACKGROUND_URL": "https://i.postimg.cc/1XK9wd68/Tien-Mon.png"}, "equipment": [{"slotId": 1, "slotName": "Mũ (Đầu)", "name": "(Trống)", "quality": "Phàm phẩm", "stats": "HP+50"}, {"slotId": 2, "slotName": "Áo (Thân)", "name": "Thanh Y Đạo Bào", "quality": "Phàm phẩm", "stats": "DEF+20, GIAM_ST+5%"}, {"slotId": 3, "slotName": "Tay trái", "name": "(Trống)", "quality": "Phàm phẩm", "stats": "DEF+10"}, {"slotId": 4, "slotName": "Tay phải", "name": "Hộ Oản", "quality": "Phàm phẩm", "stats": "ATK+5, CHINH_XAC+5%"}, {"slotId": 5, "slotName": "Quần / Giáp chân", "name": "(Trống)", "quality": "Phàm phẩm", "stats": "DEF+10"}, {"slotId": 6, "slotName": "Giày (Chân)", "name": "Thần Hành Ngoa", "quality": "Phàm phẩm", "stats": "TOC_DO+10, NE_TRANH+5%"}, {"slotId": 7, "slotName": "Nhẫn", "name": "(Trống)", "quality": "Phàm phẩm", "stats": "CRIT+5%, CRIT_DMG+15%"}, {"slotId": 8, "slotName": "Dây chuyền", "name": "Hộ Tâm Kính", "quality": "Phàm phẩm", "stats": "MP+50, HOI_PHUC+10"}, {"slotId": 9, "slotName": "Vũ khí chính", "name": "(Trống)", "quality": "Phàm phẩm", "stats": "ATK+35, XUYEN_GIAP+10"}, {"slotId": 10, "slotName": "Pháp bảo", "name": "(Trống)", "quality": "Linh phẩm", "stats": "MP+100, CRIT+10%"}], "inventory": [{"slot": 1, "name": "Hạ Phẩm Linh Thạch", "qty": 50, "type": "Tiền Tệ", "slotType": "-", "effect": "Hồi phục 100 Linh Khí"}, {"slot": 4, "name": "Hộ Oản", "qty": 1, "type": "Trang Bị", "slotType": "RIGHT_HAND", "effect": "ATK+5, CHINH_XAC+5%"}, {"slot": 5, "name": "Thần Hành Ngoa", "qty": 1, "type": "Trang Bị", "slotType": "FEET", "effect": "TOC_DO+10, NE_TRANH+5%"}, {"slot": 6, "name": "Trúc Cơ Đan", "qty": 1, "type": "Đan Dược", "slotType": "-", "effect": "Tăng tỷ lệ đột phá Trúc Cơ"}, {"slot": 7, "name": "Yêu Đan (Luyện Khí)", "qty": 2, "type": "Yêu Luyện", "slotType": "-", "effect": "Dùng để luyện đan hoặc hấp thu"}, {"slot": 6, "name": "Thanh Phong Kiếm", "qty": 1, "type": "Trang Bị", "slotType": "", "effect": "Trang bị đã tháo"}], "realms": [{"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 1, "TU_VI_CAN": 100, "HP_MAX": 60, "MP_MAX": 30, "ATK": 12, "DEF": 6, "MDEF": 4, "TOC_DO": 8}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 2, "TU_VI_CAN": 160, "HP_MAX": 75, "MP_MAX": 38, "ATK": 15, "DEF": 8, "MDEF": 5, "TOC_DO": 9}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 3, "TU_VI_CAN": 240, "HP_MAX": 95, "MP_MAX": 48, "ATK": 19, "DEF": 10, "MDEF": 6, "TOC_DO": 10}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 4, "TU_VI_CAN": 340, "HP_MAX": 120, "MP_MAX": 60, "ATK": 24, "DEF": 12, "MDEF": 8, "TOC_DO": 11}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 5, "TU_VI_CAN": 460, "HP_MAX": 150, "MP_MAX": 75, "ATK": 30, "DEF": 15, "MDEF": 10, "TOC_DO": 12}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 6, "TU_VI_CAN": 600, "HP_MAX": 185, "MP_MAX": 92, "ATK": 37, "DEF": 18, "MDEF": 12, "TOC_DO": 13}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 7, "TU_VI_CAN": 770, "HP_MAX": 225, "MP_MAX": 112, "ATK": 45, "DEF": 22, "MDEF": 15, "TOC_DO": 14}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 8, "TU_VI_CAN": 970, "HP_MAX": 270, "MP_MAX": 135, "ATK": 54, "DEF": 26, "MDEF": 18, "TOC_DO": 15}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 9, "TU_VI_CAN": 1200, "HP_MAX": 320, "MP_MAX": 160, "ATK": 64, "DEF": 31, "MDEF": 21, "TOC_DO": 16}, {"CANH_GIOI": "Luyện Tinh Hóa Khí", "TANG": 10, "TU_VI_CAN": 1500, "HP_MAX": 380, "MP_MAX": 190, "ATK": 75, "DEF": 36, "MDEF": 25, "TOC_DO": 18}, {"CANH_GIOI": "Luyện Khí", "TANG": 1, "TU_VI_CAN": 2000, "HP_MAX": 450, "MP_MAX": 220, "ATK": 90, "DEF": 45, "MDEF": 35, "TOC_DO": 20}, {"CANH_GIOI": "Luyện Khí", "TANG": 2, "TU_VI_CAN": 2700, "HP_MAX": 540, "MP_MAX": 270, "ATK": 108, "DEF": 54, "MDEF": 42, "TOC_DO": 21}, {"CANH_GIOI": "Luyện Khí", "TANG": 3, "TU_VI_CAN": 3600, "HP_MAX": 650, "MP_MAX": 325, "ATK": 130, "DEF": 65, "MDEF": 50, "TOC_DO": 22}, {"CANH_GIOI": "Luyện Khí", "TANG": 4, "TU_VI_CAN": 4800, "HP_MAX": 780, "MP_MAX": 390, "ATK": 155, "DEF": 78, "MDEF": 60, "TOC_DO": 23}, {"CANH_GIOI": "Luyện Khí", "TANG": 5, "TU_VI_CAN": 6300, "HP_MAX": 940, "MP_MAX": 470, "ATK": 185, "DEF": 92, "MDEF": 72, "TOC_DO": 24}, {"CANH_GIOI": "Luyện Khí", "TANG": 6, "TU_VI_CAN": 8200, "HP_MAX": 1130, "MP_MAX": 565, "ATK": 220, "DEF": 110, "MDEF": 86, "TOC_DO": 25}, {"CANH_GIOI": "Luyện Khí", "TANG": 7, "TU_VI_CAN": 10600, "HP_MAX": 1360, "MP_MAX": 680, "ATK": 260, "DEF": 130, "MDEF": 102, "TOC_DO": 26}, {"CANH_GIOI": "Luyện Khí", "TANG": 8, "TU_VI_CAN": 13600, "HP_MAX": 1630, "MP_MAX": 815, "ATK": 310, "DEF": 155, "MDEF": 122, "TOC_DO": 27}, {"CANH_GIOI": "Luyện Khí", "TANG": 9, "TU_VI_CAN": 17500, "HP_MAX": 1950, "MP_MAX": 975, "ATK": 370, "DEF": 185, "MDEF": 145, "TOC_DO": 28}, {"CANH_GIOI": "Luyện Khí", "TANG": 10, "TU_VI_CAN": 23000, "HP_MAX": 2350, "MP_MAX": 1175, "ATK": 440, "DEF": 220, "MDEF": 175, "TOC_DO": 30}, {"CANH_GIOI": "Trúc Cơ", "TANG": 1, "TU_VI_CAN": 30000, "HP_MAX": 3200, "MP_MAX": 1600, "ATK": 580, "DEF": 290, "MDEF": 230, "TOC_DO": 35}, {"CANH_GIOI": "Trúc Cơ", "TANG": 2, "TU_VI_CAN": 39000, "HP_MAX": 3900, "MP_MAX": 1950, "ATK": 700, "DEF": 350, "MDEF": 280, "TOC_DO": 37}, {"CANH_GIOI": "Trúc Cơ", "TANG": 3, "TU_VI_CAN": 51000, "HP_MAX": 4800, "MP_MAX": 2400, "ATK": 850, "DEF": 425, "MDEF": 340, "TOC_DO": 39}, {"CANH_GIOI": "Trúc Cơ", "TANG": 4, "TU_VI_CAN": 66000, "HP_MAX": 5900, "MP_MAX": 2950, "ATK": 1030, "DEF": 515, "MDEF": 410, "TOC_DO": 41}, {"CANH_GIOI": "Trúc Cơ", "TANG": 5, "TU_VI_CAN": 85000, "HP_MAX": 7200, "MP_MAX": 3600, "ATK": 1250, "DEF": 625, "MDEF": 500, "TOC_DO": 44}, {"CANH_GIOI": "Trúc Cơ", "TANG": 6, "TU_VI_CAN": 110000, "HP_MAX": 8800, "MP_MAX": 4400, "ATK": 1500, "DEF": 750, "MDEF": 600, "TOC_DO": 47}, {"CANH_GIOI": "Trúc Cơ", "TANG": 7, "TU_VI_CAN": 142000, "HP_MAX": 10800, "MP_MAX": 5400, "ATK": 1800, "DEF": 900, "MDEF": 720, "TOC_DO": 50}, {"CANH_GIOI": "Trúc Cơ", "TANG": 8, "TU_VI_CAN": 183000, "HP_MAX": 13200, "MP_MAX": 6600, "ATK": 2160, "DEF": 1080, "MDEF": 860, "TOC_DO": 53}, {"CANH_GIOI": "Trúc Cơ", "TANG": 9, "TU_VI_CAN": 235000, "HP_MAX": 16000, "MP_MAX": 8000, "ATK": 2580, "DEF": 1290, "MDEF": 1030, "TOC_DO": 56}, {"CANH_GIOI": "Trúc Cơ", "TANG": 10, "TU_VI_CAN": 300000, "HP_MAX": 19500, "MP_MAX": 9750, "ATK": 3100, "DEF": 1550, "MDEF": 1240, "TOC_DO": 60}, {"CANH_GIOI": "Kim Đan", "TANG": 1, "TU_VI_CAN": 400000, "HP_MAX": 26000, "MP_MAX": 13000, "ATK": 4000, "DEF": 2000, "MDEF": 1650, "TOC_DO": 70}, {"CANH_GIOI": "Kim Đan", "TANG": 2, "TU_VI_CAN": 530000, "HP_MAX": 32000, "MP_MAX": 16000, "ATK": 4900, "DEF": 2450, "MDEF": 2050, "TOC_DO": 74}, {"CANH_GIOI": "Kim Đan", "TANG": 3, "TU_VI_CAN": 700000, "HP_MAX": 40000, "MP_MAX": 20000, "ATK": 6000, "DEF": 3000, "MDEF": 2500, "TOC_DO": 78}, {"CANH_GIOI": "Kim Đan", "TANG": 4, "TU_VI_CAN": 920000, "HP_MAX": 50000, "MP_MAX": 25000, "ATK": 7300, "DEF": 3650, "MDEF": 3050, "TOC_DO": 82}, {"CANH_GIOI": "Kim Đan", "TANG": 5, "TU_VI_CAN": 1200000, "HP_MAX": 62000, "MP_MAX": 31000, "ATK": 8900, "DEF": 4450, "MDEF": 3700, "TOC_DO": 86}, {"CANH_GIOI": "Kim Đan", "TANG": 6, "TU_VI_CAN": 1560000, "HP_MAX": 77000, "MP_MAX": 38500, "ATK": 10800, "DEF": 5400, "MDEF": 4500, "TOC_DO": 90}, {"CANH_GIOI": "Kim Đan", "TANG": 7, "TU_VI_CAN": 2000000, "HP_MAX": 95000, "MP_MAX": 47500, "ATK": 13000, "DEF": 6500, "MDEF": 5450, "TOC_DO": 95}, {"CANH_GIOI": "Kim Đan", "TANG": 8, "TU_VI_CAN": 2600000, "HP_MAX": 117000, "MP_MAX": 58500, "ATK": 15600, "DEF": 7800, "MDEF": 6550, "TOC_DO": 100}, {"CANH_GIOI": "Kim Đan", "TANG": 9, "TU_VI_CAN": 3400000, "HP_MAX": 144000, "MP_MAX": 72000, "ATK": 18700, "DEF": 9350, "MDEF": 7850, "TOC_DO": 105}, {"CANH_GIOI": "Kim Đan", "TANG": 10, "TU_VI_CAN": 4500000, "HP_MAX": 178000, "MP_MAX": 89000, "ATK": 22500, "DEF": 11250, "MDEF": 9450, "TOC_DO": 112}, {"CANH_GIOI": "Nguyên Anh", "TANG": 1, "TU_VI_CAN": 6000000, "HP_MAX": 240000, "MP_MAX": 120000, "ATK": 29000, "DEF": 14500, "MDEF": 12500, "TOC_DO": 125}, {"CANH_GIOI": "Nguyên Anh", "TANG": 2, "TU_VI_CAN": 8000000, "HP_MAX": 295000, "MP_MAX": 147500, "ATK": 35500, "DEF": 17750, "MDEF": 15300, "TOC_DO": 130}, {"CANH_GIOI": "Nguyên Anh", "TANG": 3, "TU_VI_CAN": 10500000, "HP_MAX": 360000, "MP_MAX": 180000, "ATK": 43000, "DEF": 21500, "MDEF": 18600, "TOC_DO": 135}, {"CANH_GIOI": "Nguyên Anh", "TANG": 4, "TU_VI_CAN": 14000000, "HP_MAX": 440000, "MP_MAX": 220000, "ATK": 52000, "DEF": 26000, "MDEF": 22500, "TOC_DO": 140}, {"CANH_GIOI": "Nguyên Anh", "TANG": 5, "TU_VI_CAN": 18500000, "HP_MAX": 540000, "MP_MAX": 270000, "ATK": 63000, "DEF": 31500, "MDEF": 27300, "TOC_DO": 146}, {"CANH_GIOI": "Nguyên Anh", "TANG": 6, "TU_VI_CAN": 24500000, "HP_MAX": 660000, "MP_MAX": 330000, "ATK": 76000, "DEF": 38000, "MDEF": 33000, "TOC_DO": 152}, {"CANH_GIOI": "Nguyên Anh", "TANG": 7, "TU_VI_CAN": 32000000, "HP_MAX": 800000, "MP_MAX": 400000, "ATK": 91500, "DEF": 45750, "MDEF": 39800, "TOC_DO": 160}, {"CANH_GIOI": "Nguyên Anh", "TANG": 8, "TU_VI_CAN": 42000000, "HP_MAX": 970000, "MP_MAX": 485000, "ATK": 110000, "DEF": 55000, "MDEF": 48000, "TOC_DO": 168}, {"CANH_GIOI": "Nguyên Anh", "TANG": 9, "TU_VI_CAN": 55000000, "HP_MAX": 1180000, "MP_MAX": 590000, "ATK": 132000, "DEF": 66000, "MDEF": 57800, "TOC_DO": 176}, {"CANH_GIOI": "Nguyên Anh", "TANG": 10, "TU_VI_CAN": 72000000, "HP_MAX": 1450000, "MP_MAX": 725000, "ATK": 160000, "DEF": 80000, "MDEF": 70000, "TOC_DO": 185}, {"CANH_GIOI": "Hóa Thần", "TANG": 1, "TU_VI_CAN": 95000000, "HP_MAX": 1900000, "MP_MAX": 950000, "ATK": 200000, "DEF": 100000, "MDEF": 88000, "TOC_DO": 200}, {"CANH_GIOI": "Hóa Thần", "TANG": 2, "TU_VI_CAN": 125000000, "HP_MAX": 2350000, "MP_MAX": 1175000, "ATK": 245000, "DEF": 122500, "MDEF": 108000, "TOC_DO": 208}, {"CANH_GIOI": "Hóa Thần", "TANG": 3, "TU_VI_CAN": 165000000, "HP_MAX": 2900000, "MP_MAX": 1450000, "ATK": 300000, "DEF": 150000, "MDEF": 132000, "TOC_DO": 216}, {"CANH_GIOI": "Hóa Thần", "TANG": 4, "TU_VI_CAN": 215000000, "HP_MAX": 3550000, "MP_MAX": 1775000, "ATK": 365000, "DEF": 182500, "MDEF": 160000, "TOC_DO": 224}, {"CANH_GIOI": "Hóa Thần", "TANG": 5, "TU_VI_CAN": 280000000, "HP_MAX": 4350000, "MP_MAX": 2175000, "ATK": 445000, "DEF": 222500, "MDEF": 195000, "TOC_DO": 234}, {"CANH_GIOI": "Hóa Thần", "TANG": 6, "TU_VI_CAN": 365000000, "HP_MAX": 5300000, "MP_MAX": 2650000, "ATK": 540000, "DEF": 270000, "MDEF": 237000, "TOC_DO": 244}, {"CANH_GIOI": "Hóa Thần", "TANG": 7, "TU_VI_CAN": 475000000, "HP_MAX": 6450000, "MP_MAX": 3225000, "ATK": 655000, "DEF": 327500, "MDEF": 288000, "TOC_DO": 255}, {"CANH_GIOI": "Hóa Thần", "TANG": 8, "TU_VI_CAN": 620000000, "HP_MAX": 7850000, "MP_MAX": 3925000, "ATK": 795000, "DEF": 397500, "MDEF": 350000, "TOC_DO": 266}, {"CANH_GIOI": "Hóa Thần", "TANG": 9, "TU_VI_CAN": 800000000, "HP_MAX": 9550000, "MP_MAX": 4775000, "ATK": 960000, "DEF": 480000, "MDEF": 425000, "TOC_DO": 278}, {"CANH_GIOI": "Hóa Thần", "TANG": 10, "TU_VI_CAN": 1050000000, "HP_MAX": 11600000, "MP_MAX": 5800000, "ATK": 1160000, "DEF": 580000, "MDEF": 515000, "TOC_DO": 290}, {"CANH_GIOI": "Luyện Hư", "TANG": 1, "TU_VI_CAN": 1400000000, "HP_MAX": 15000000, "MP_MAX": 7500000, "ATK": 1450000, "DEF": 725000, "MDEF": 650000, "TOC_DO": 310}, {"CANH_GIOI": "Luyện Hư", "TANG": 2, "TU_VI_CAN": 1850000000, "HP_MAX": 18500000, "MP_MAX": 9250000, "ATK": 1780000, "DEF": 890000, "MDEF": 800000, "TOC_DO": 322}, {"CANH_GIOI": "Luyện Hư", "TANG": 3, "TU_VI_CAN": 2450000000, "HP_MAX": 22800000, "MP_MAX": 11400000, "ATK": 2180000, "DEF": 1090000, "MDEF": 980000, "TOC_DO": 335}, {"CANH_GIOI": "Luyện Hư", "TANG": 4, "TU_VI_CAN": 3200000000, "HP_MAX": 28000000, "MP_MAX": 14000000, "ATK": 2660000, "DEF": 1330000, "MDEF": 1200000, "TOC_DO": 348}, {"CANH_GIOI": "Luyện Hư", "TANG": 5, "TU_VI_CAN": 4200000000, "HP_MAX": 34200000, "MP_MAX": 17100000, "ATK": 3240000, "DEF": 1620000, "MDEF": 1460000, "TOC_DO": 362}, {"CANH_GIOI": "Luyện Hư", "TANG": 6, "TU_VI_CAN": 5500000000, "HP_MAX": 41800000, "MP_MAX": 20900000, "ATK": 3950000, "DEF": 1975000, "MDEF": 1780000, "TOC_DO": 377}, {"CANH_GIOI": "Luyện Hư", "TANG": 7, "TU_VI_CAN": 7200000000, "HP_MAX": 51000000, "MP_MAX": 25500000, "ATK": 4800000, "DEF": 2400000, "MDEF": 2160000, "TOC_DO": 393}, {"CANH_GIOI": "Luyện Hư", "TANG": 8, "TU_VI_CAN": 9400000000, "HP_MAX": 62000000, "MP_MAX": 31000000, "ATK": 5820000, "DEF": 2910000, "MDEF": 2620000, "TOC_DO": 410}, {"CANH_GIOI": "Luyện Hư", "TANG": 9, "TU_VI_CAN": 12200000000, "HP_MAX": 75200000, "MP_MAX": 37600000, "ATK": 7050000, "DEF": 3525000, "MDEF": 3180000, "TOC_DO": 428}, {"CANH_GIOI": "Luyện Hư", "TANG": 10, "TU_VI_CAN": 16000000000, "HP_MAX": 91000000, "MP_MAX": 45500000, "ATK": 8500000, "DEF": 4250000, "MDEF": 3850000, "TOC_DO": 450}, {"CANH_GIOI": "Hợp Thể", "TANG": 1, "TU_VI_CAN": 21000000000, "HP_MAX": 120000000, "MP_MAX": 60000000, "ATK": 10800000, "DEF": 5400000, "MDEF": 4850000, "TOC_DO": 475}, {"CANH_GIOI": "Hợp Thể", "TANG": 2, "TU_VI_CAN": 27500000000, "HP_MAX": 148000000, "MP_MAX": 74000000, "ATK": 13200000, "DEF": 6600000, "MDEF": 5950000, "TOC_DO": 495}, {"CANH_GIOI": "Hợp Thể", "TANG": 3, "TU_VI_CAN": 36000000000, "HP_MAX": 182000000, "MP_MAX": 91000000, "ATK": 16100000, "DEF": 8050000, "MDEF": 7250000, "TOC_DO": 515}, {"CANH_GIOI": "Hợp Thể", "TANG": 4, "TU_VI_CAN": 47000000000, "HP_MAX": 224000000, "MP_MAX": 112000000, "ATK": 19600000, "DEF": 9800000, "MDEF": 8800000, "TOC_DO": 536}, {"CANH_GIOI": "Hợp Thể", "TANG": 5, "TU_VI_CAN": 61000000000, "HP_MAX": 275000000, "MP_MAX": 137500000, "ATK": 23800000, "DEF": 11900000, "MDEF": 10700000, "TOC_DO": 558}, {"CANH_GIOI": "Hợp Thể", "TANG": 6, "TU_VI_CAN": 80000000000, "HP_MAX": 338000000, "MP_MAX": 169000000, "ATK": 28900000, "DEF": 14450000, "MDEF": 13000000, "TOC_DO": 581}, {"CANH_GIOI": "Hợp Thể", "TANG": 7, "TU_VI_CAN": 105000000000, "HP_MAX": 415000000, "MP_MAX": 207500000, "ATK": 35000000, "DEF": 17500000, "MDEF": 15750000, "TOC_DO": 605}, {"CANH_GIOI": "Hợp Thể", "TANG": 8, "TU_VI_CAN": 138000000000, "HP_MAX": 508000000, "MP_MAX": 254000000, "ATK": 42400000, "DEF": 21200000, "MDEF": 19100000, "TOC_DO": 630}, {"CANH_GIOI": "Hợp Thể", "TANG": 9, "TU_VI_CAN": 180000000000, "HP_MAX": 620000000, "MP_MAX": 310000000, "ATK": 51300000, "DEF": 25650000, "MDEF": 23100000, "TOC_DO": 656}, {"CANH_GIOI": "Hợp Thể", "TANG": 10, "TU_VI_CAN": 235000000000, "HP_MAX": 755000000, "MP_MAX": 377500000, "ATK": 62000000, "DEF": 31000000, "MDEF": 28000000, "TOC_DO": 690}, {"CANH_GIOI": "Đại Thừa", "TANG": 1, "TU_VI_CAN": 310000000000, "HP_MAX": 1000000000, "MP_MAX": 500000000, "ATK": 80000000, "DEF": 40000000, "MDEF": 36000000, "TOC_DO": 730}, {"CANH_GIOI": "Đại Thừa", "TANG": 2, "TU_VI_CAN": 410000000000, "HP_MAX": 1250000000, "MP_MAX": 625000000, "ATK": 98000000, "DEF": 49000000, "MDEF": 44000000, "TOC_DO": 760}, {"CANH_GIOI": "Đại Thừa", "TANG": 3, "TU_VI_CAN": 540000000000, "HP_MAX": 1550000000, "MP_MAX": 775000000, "ATK": 120000000, "DEF": 60000000, "MDEF": 54000000, "TOC_DO": 792}, {"CANH_GIOI": "Đại Thừa", "TANG": 4, "TU_VI_CAN": 710000000000, "HP_MAX": 1920000000, "MP_MAX": 960000000, "ATK": 147000000, "DEF": 73500000, "MDEF": 66000000, "TOC_DO": 826}, {"CANH_GIOI": "Đại Thừa", "TANG": 5, "TU_VI_CAN": 930000000000, "HP_MAX": 2380000000, "MP_MAX": 1190000000, "ATK": 180000000, "DEF": 90000000, "MDEF": 81000000, "TOC_DO": 862}, {"CANH_GIOI": "Đại Thừa", "TANG": 6, "TU_VI_CAN": 1220000000000, "HP_MAX": 2950000000, "MP_MAX": 1475000000, "ATK": 220000000, "DEF": 110000000, "MDEF": 99000000, "TOC_DO": 900}, {"CANH_GIOI": "Đại Thừa", "TANG": 7, "TU_VI_CAN": 1600000000000, "HP_MAX": 3650000000, "MP_MAX": 1825000000, "ATK": 270000000, "DEF": 135000000, "MDEF": 121500000, "TOC_DO": 940}, {"CANH_GIOI": "Đại Thừa", "TANG": 8, "TU_VI_CAN": 2100000000000, "HP_MAX": 4500000000, "MP_MAX": 2250000000, "ATK": 330000000, "DEF": 165000000, "MDEF": 148500000, "TOC_DO": 982}, {"CANH_GIOI": "Đại Thừa", "TANG": 9, "TU_VI_CAN": 2750000000000, "HP_MAX": 5550000000, "MP_MAX": 2775000000, "ATK": 405000000, "DEF": 202500000, "MDEF": 182000000, "TOC_DO": 1026}, {"CANH_GIOI": "Đại Thừa", "TANG": 10, "TU_VI_CAN": 3600000000000, "HP_MAX": 6850000000, "MP_MAX": 3425000000, "ATK": 500000000, "DEF": 250000000, "MDEF": 225000000, "TOC_DO": 1080}, {"CANH_GIOI": "Độ Kiếp", "TANG": 1, "TU_VI_CAN": 4800000000000, "HP_MAX": 9000000000, "MP_MAX": 4500000000, "ATK": 650000000, "DEF": 325000000, "MDEF": 290000000, "TOC_DO": 1150}, {"CANH_GIOI": "Độ Kiếp", "TANG": 2, "TU_VI_CAN": 6400000000000, "HP_MAX": 11800000000, "MP_MAX": 5900000000, "ATK": 840000000, "DEF": 420000000, "MDEF": 375000000, "TOC_DO": 1210}, {"CANH_GIOI": "Độ Kiếp", "TANG": 3, "TU_VI_CAN": 8500000000000, "HP_MAX": 15400000000, "MP_MAX": 7700000000, "ATK": 1080000000, "DEF": 540000000, "MDEF": 485000000, "TOC_DO": 1275}, {"CANH_GIOI": "Độ Kiếp", "TANG": 4, "TU_VI_CAN": 11300000000000, "HP_MAX": 20000000000, "MP_MAX": 10000000000, "ATK": 1390000000, "DEF": 695000000, "MDEF": 625000000, "TOC_DO": 1345}, {"CANH_GIOI": "Độ Kiếp", "TANG": 5, "TU_VI_CAN": 15000000000000, "HP_MAX": 26000000000, "MP_MAX": 13000000000, "ATK": 1780000000, "DEF": 890000000, "MDEF": 800000000, "TOC_DO": 1420}, {"CANH_GIOI": "Độ Kiếp", "TANG": 6, "TU_VI_CAN": 20000000000000, "HP_MAX": 33800000000, "MP_MAX": 16900000000, "ATK": 2280000000, "DEF": 1140000000, "MDEF": 1025000000, "TOC_DO": 1500}, {"CANH_GIOI": "Độ Kiếp", "TANG": 7, "TU_VI_CAN": 26500000000000, "HP_MAX": 44000000000, "MP_MAX": 22000000000, "ATK": 2920000000, "DEF": 1460000000, "MDEF": 1310000000, "TOC_DO": 1585}, {"CANH_GIOI": "Độ Kiếp", "TANG": 8, "TU_VI_CAN": 35000000000000, "HP_MAX": 57200000000, "MP_MAX": 28600000000, "ATK": 3740000000, "DEF": 1870000000, "MDEF": 1680000000, "TOC_DO": 1675}, {"CANH_GIOI": "Độ Kiếp", "TANG": 9, "TU_VI_CAN": 46000000000000, "HP_MAX": 74500000000, "MP_MAX": 37250000000, "ATK": 4800000000, "DEF": 2400000000, "MDEF": 2150000000, "TOC_DO": 1770}, {"CANH_GIOI": "Độ Kiếp", "TANG": 10, "TU_VI_CAN": 60000000000000, "HP_MAX": 100000000000, "MP_MAX": 50000000000, "ATK": 6200000000, "DEF": 3100000000, "MDEF": 2800000000, "TOC_DO": 1900}, {"CANH_GIOI": "Nhân Tiên", "TANG": 1, "TU_VI_CAN": 79600000000000, "HP_MAX": 132000000000, "MP_MAX": 66000000000, "ATK": 8200000000, "DEF": 4100000000, "MDEF": 3690000000, "TOC_DO": 2080}, {"CANH_GIOI": "Nhân Tiên", "TANG": 2, "TU_VI_CAN": 106000000000000, "HP_MAX": 175000000000, "MP_MAX": 87500000000, "ATK": 10900000000, "DEF": 5450000000, "MDEF": 4905000000, "TOC_DO": 2260}, {"CANH_GIOI": "Nhân Tiên", "TANG": 3, "TU_VI_CAN": 140000000000000, "HP_MAX": 232000000000, "MP_MAX": 116000000000, "ATK": 14400000000, "DEF": 7200000000, "MDEF": 6480000000, "TOC_DO": 2450}, {"CANH_GIOI": "Nhân Tiên", "TANG": 4, "TU_VI_CAN": 186000000000000, "HP_MAX": 308000000000, "MP_MAX": 154000000000, "ATK": 19000000000, "DEF": 9500000000, "MDEF": 8550000000, "TOC_DO": 2630}, {"CANH_GIOI": "Nhân Tiên", "TANG": 5, "TU_VI_CAN": 247000000000000, "HP_MAX": 408000000000, "MP_MAX": 204000000000, "ATK": 25200000000, "DEF": 12600000000, "MDEF": 11340000000, "TOC_DO": 2810}, {"CANH_GIOI": "Nhân Tiên", "TANG": 6, "TU_VI_CAN": 328000000000000, "HP_MAX": 540000000000, "MP_MAX": 270000000000, "ATK": 33300000000, "DEF": 16650000000, "MDEF": 14985000000, "TOC_DO": 2990}, {"CANH_GIOI": "Nhân Tiên", "TANG": 7, "TU_VI_CAN": 435000000000000, "HP_MAX": 715000000000, "MP_MAX": 357500000000, "ATK": 44000000000, "DEF": 22000000000, "MDEF": 19800000000, "TOC_DO": 3170}, {"CANH_GIOI": "Nhân Tiên", "TANG": 8, "TU_VI_CAN": 578000000000000, "HP_MAX": 947000000000, "MP_MAX": 473500000000, "ATK": 58300000000, "DEF": 29150000000, "MDEF": 26235000000, "TOC_DO": 3350}, {"CANH_GIOI": "Nhân Tiên", "TANG": 9, "TU_VI_CAN": 766000000000000, "HP_MAX": 1250000000000, "MP_MAX": 625000000000, "ATK": 77100000000, "DEF": 38550000000, "MDEF": 34695000000, "TOC_DO": 3540}, {"CANH_GIOI": "Nhân Tiên", "TANG": 10, "TU_VI_CAN": 1020000000000000, "HP_MAX": 1660000000000, "MP_MAX": 830000000000, "ATK": 102000000000, "DEF": 51000000000, "MDEF": 45900000000, "TOC_DO": 3720}, {"CANH_GIOI": "Địa Tiên", "TANG": 1, "TU_VI_CAN": 1350000000000000, "HP_MAX": 2200000000000, "MP_MAX": 1100000000000, "ATK": 135000000000, "DEF": 67500000000, "MDEF": 60000000000, "TOC_DO": 3900}, {"CANH_GIOI": "Địa Tiên", "TANG": 2, "TU_VI_CAN": 1800000000000000, "HP_MAX": 2850000000000, "MP_MAX": 1425000000000, "ATK": 175000000000, "DEF": 87500000000, "MDEF": 78000000000, "TOC_DO": 4120}, {"CANH_GIOI": "Địa Tiên", "TANG": 3, "TU_VI_CAN": 2400000000000000, "HP_MAX": 3700000000000, "MP_MAX": 1850000000000, "ATK": 228000000000, "DEF": 114000000000, "MDEF": 102000000000, "TOC_DO": 4360}, {"CANH_GIOI": "Địa Tiên", "TANG": 4, "TU_VI_CAN": 3200000000000000, "HP_MAX": 4800000000000, "MP_MAX": 2400000000000, "ATK": 296000000000, "DEF": 148000000000, "MDEF": 132000000000, "TOC_DO": 4620}, {"CANH_GIOI": "Địa Tiên", "TANG": 5, "TU_VI_CAN": 4250000000000000, "HP_MAX": 6250000000000, "MP_MAX": 3125000000000, "ATK": 385000000000, "DEF": 192500000000, "MDEF": 172000000000, "TOC_DO": 4900}, {"CANH_GIOI": "Địa Tiên", "TANG": 6, "TU_VI_CAN": 5650000000000000, "HP_MAX": 8150000000000, "MP_MAX": 4075000000000, "ATK": 500000000000, "DEF": 250000000000, "MDEF": 224000000000, "TOC_DO": 5200}, {"CANH_GIOI": "Địa Tiên", "TANG": 7, "TU_VI_CAN": 7500000000000000, "HP_MAX": 10600000000000, "MP_MAX": 5300000000000, "ATK": 650000000000, "DEF": 325000000000, "MDEF": 291000000000, "TOC_DO": 5520}, {"CANH_GIOI": "Địa Tiên", "TANG": 8, "TU_VI_CAN": 10000000000000000, "HP_MAX": 13800000000000, "MP_MAX": 6900000000000, "ATK": 845000000000, "DEF": 422500000000, "MDEF": 378000000000, "TOC_DO": 5860}, {"CANH_GIOI": "Địa Tiên", "TANG": 9, "TU_VI_CAN": 13300000000000000, "HP_MAX": 18000000000000, "MP_MAX": 9000000000000, "ATK": 1100000000000, "DEF": 550000000000, "MDEF": 492000000000, "TOC_DO": 6220}, {"CANH_GIOI": "Địa Tiên", "TANG": 10, "TU_VI_CAN": 17800000000000000, "HP_MAX": 23500000000000, "MP_MAX": 11750000000000, "ATK": 1430000000000, "DEF": 715000000000, "MDEF": 640000000000, "TOC_DO": 6600}, {"CANH_GIOI": "Thiên Tiên", "TANG": 1, "TU_VI_CAN": 24000000000000000, "HP_MAX": 32000000000000, "MP_MAX": 16000000000000, "ATK": 1950000000000, "DEF": 975000000000, "MDEF": 870000000000, "TOC_DO": 7000}, {"CANH_GIOI": "Thiên Tiên", "TANG": 2, "TU_VI_CAN": 32000000000000000, "HP_MAX": 41500000000000, "MP_MAX": 20750000000000, "ATK": 2500000000000, "DEF": 1250000000000, "MDEF": 1120000000000, "TOC_DO": 7420}, {"CANH_GIOI": "Thiên Tiên", "TANG": 3, "TU_VI_CAN": 43000000000000000, "HP_MAX": 54000000000000, "MP_MAX": 27000000000000, "ATK": 3250000000000, "DEF": 1625000000000, "MDEF": 1450000000000, "TOC_DO": 7860}, {"CANH_GIOI": "Thiên Tiên", "TANG": 4, "TU_VI_CAN": 57500000000000000, "HP_MAX": 70000000000000, "MP_MAX": 35000000000000, "ATK": 4200000000000, "DEF": 2100000000000, "MDEF": 1880000000000, "TOC_DO": 8320}, {"CANH_GIOI": "Thiên Tiên", "TANG": 5, "TU_VI_CAN": 77000000000000000, "HP_MAX": 91000000000000, "MP_MAX": 45500000000000, "ATK": 5450000000000, "DEF": 2725000000000, "MDEF": 2440000000000, "TOC_DO": 8800}, {"CANH_GIOI": "Thiên Tiên", "TANG": 6, "TU_VI_CAN": 103000000000000000, "HP_MAX": 118000000000000, "MP_MAX": 59000000000000, "ATK": 7100000000000, "DEF": 3550000000000, "MDEF": 3180000000000, "TOC_DO": 9300}, {"CANH_GIOI": "Thiên Tiên", "TANG": 7, "TU_VI_CAN": 138000000000000000, "HP_MAX": 153000000000000, "MP_MAX": 76500000000000, "ATK": 9200000000000, "DEF": 4600000000000, "MDEF": 4120000000000, "TOC_DO": 9820}, {"CANH_GIOI": "Thiên Tiên", "TANG": 8, "TU_VI_CAN": 185000000000000000, "HP_MAX": 198000000000000, "MP_MAX": 99000000000000, "ATK": 11900000000000, "DEF": 5950000000000, "MDEF": 5340000000000, "TOC_DO": 10360}, {"CANH_GIOI": "Thiên Tiên", "TANG": 9, "TU_VI_CAN": 248000000000000000, "HP_MAX": 257000000000000, "MP_MAX": 128500000000000, "ATK": 15500000000000, "DEF": 7750000000000, "MDEF": 6950000000000, "TOC_DO": 10920}, {"CANH_GIOI": "Thiên Tiên", "TANG": 10, "TU_VI_CAN": 335000000000000000, "HP_MAX": 335000000000000, "MP_MAX": 167500000000000, "ATK": 20000000000000, "DEF": 10000000000000, "MDEF": 9000000000000, "TOC_DO": 11500}, {"CANH_GIOI": "Huyền Tiên", "TANG": 1, "TU_VI_CAN": 450000000000000000, "HP_MAX": 450000000000000, "MP_MAX": 225000000000000, "ATK": 27000000000000, "DEF": 13500000000000, "MDEF": 12150000000000, "TOC_DO": 12100}, {"CANH_GIOI": "Huyền Tiên", "TANG": 2, "TU_VI_CAN": 600000000000000000, "HP_MAX": 585000000000000, "MP_MAX": 292500000000000, "ATK": 35000000000000, "DEF": 17500000000000, "MDEF": 15750000000000, "TOC_DO": 12720}, {"CANH_GIOI": "Huyền Tiên", "TANG": 3, "TU_VI_CAN": 800000000000000000, "HP_MAX": 760000000000000, "MP_MAX": 380000000000000, "ATK": 45500000000000, "DEF": 22750000000000, "MDEF": 20450000000000, "TOC_DO": 13360}, {"CANH_GIOI": "Huyền Tiên", "TANG": 4, "TU_VI_CAN": 1070000000000000000, "HP_MAX": 985000000000000, "MP_MAX": 492500000000000, "ATK": 59000000000000, "DEF": 29500000000000, "MDEF": 26500000000000, "TOC_DO": 14020}, {"CANH_GIOI": "Huyền Tiên", "TANG": 5, "TU_VI_CAN": 1430000000000000000, "HP_MAX": 1280000000000000, "MP_MAX": 640000000000000, "ATK": 76500000000000, "DEF": 38250000000000, "MDEF": 34400000000000, "TOC_DO": 14700}, {"CANH_GIOI": "Huyền Tiên", "TANG": 6, "TU_VI_CAN": 1910000000000000000, "HP_MAX": 1660000000000000, "MP_MAX": 830000000000000, "ATK": 99500000000000, "DEF": 49750000000000, "MDEF": 44700000000000, "TOC_DO": 15400}, {"CANH_GIOI": "Huyền Tiên", "TANG": 7, "TU_VI_CAN": 2550000000000000000, "HP_MAX": 2150000000000000, "MP_MAX": 1075000000000000, "ATK": 129000000000000, "DEF": 64500000000000, "MDEF": 58000000000000, "TOC_DO": 16120}, {"CANH_GIOI": "Huyền Tiên", "TANG": 8, "TU_VI_CAN": 3400000000000000000, "HP_MAX": 2790000000000000, "MP_MAX": 1395000000000000, "ATK": 167000000000000, "DEF": 83500000000000, "MDEF": 75100000000000, "TOC_DO": 16860}, {"CANH_GIOI": "Huyền Tiên", "TANG": 9, "TU_VI_CAN": 4550000000000000000, "HP_MAX": 3620000000000000, "MP_MAX": 1810000000000000, "ATK": 217000000000000, "DEF": 108500000000000, "MDEF": 97600000000000, "TOC_DO": 17620}, {"CANH_GIOI": "Huyền Tiên", "TANG": 10, "TU_VI_CAN": 6100000000000000000, "HP_MAX": 4700000000000000, "MP_MAX": 2350000000000000, "ATK": 282000000000000, "DEF": 141000000000000, "MDEF": 126900000000000, "TOC_DO": 18400}, {"CANH_GIOI": "Chân Tiên", "TANG": 1, "TU_VI_CAN": 8200000000000000000, "HP_MAX": 6300000000000000, "MP_MAX": 3150000000000000, "ATK": 380000000000000, "DEF": 190000000000000, "MDEF": 171000000000000, "TOC_DO": 19200}, {"CANH_GIOI": "Chân Tiên", "TANG": 2, "TU_VI_CAN": 11000000000000000000, "HP_MAX": 8200000000000000, "MP_MAX": 4100000000000000, "ATK": 490000000000000, "DEF": 245000000000000, "MDEF": 220000000000000, "TOC_DO": 20050}, {"CANH_GIOI": "Chân Tiên", "TANG": 3, "TU_VI_CAN": 14800000000000000000, "HP_MAX": 10600000000000000, "MP_MAX": 5300000000000000, "ATK": 635000000000000, "DEF": 317500000000000, "MDEF": 285000000000000, "TOC_DO": 20950}, {"CANH_GIOI": "Chân Tiên", "TANG": 4, "TU_VI_CAN": 20000000000000000000, "HP_MAX": 13700000000000000, "MP_MAX": 6850000000000000, "ATK": 820000000000000, "DEF": 410000000000000, "MDEF": 369000000000000, "TOC_DO": 21900}, {"CANH_GIOI": "Chân Tiên", "TANG": 5, "TU_VI_CAN": 27000000000000000000, "HP_MAX": 17800000000000000, "MP_MAX": 8900000000000000, "ATK": 1060000000000000, "DEF": 530000000000000, "MDEF": 477000000000000, "TOC_DO": 22900}, {"CANH_GIOI": "Chân Tiên", "TANG": 6, "TU_VI_CAN": 36500000000000000000, "HP_MAX": 23100000000000000, "MP_MAX": 11550000000000000, "ATK": 1370000000000000, "DEF": 685000000000000, "MDEF": 616000000000000, "TOC_DO": 23950}, {"CANH_GIOI": "Chân Tiên", "TANG": 7, "TU_VI_CAN": 49000000000000000000, "HP_MAX": 30000000000000000, "MP_MAX": 15000000000000000, "ATK": 1780000000000000, "DEF": 890000000000000, "MDEF": 801000000000000, "TOC_DO": 25050}, {"CANH_GIOI": "Chân Tiên", "TANG": 8, "TU_VI_CAN": 66000000000000000000, "HP_MAX": 39000000000000000, "MP_MAX": 19500000000000000, "ATK": 2310000000000000, "DEF": 1155000000000000, "MDEF": 1039000000000000, "TOC_DO": 26200}, {"CANH_GIOI": "Chân Tiên", "TANG": 9, "TU_VI_CAN": 89000000000000000000, "HP_MAX": 50700000000000000, "MP_MAX": 25350000000000000, "ATK": 3000000000000000, "DEF": 1500000000000000, "MDEF": 1350000000000000, "TOC_DO": 27400}, {"CANH_GIOI": "Chân Tiên", "TANG": 10, "TU_VI_CAN": 120000000000000000000, "HP_MAX": 66000000000000000, "MP_MAX": 33000000000000000, "ATK": 3900000000000000, "DEF": 1950000000000000, "MDEF": 1755000000000000, "TOC_DO": 28650}, {"CANH_GIOI": "Kim Tiên", "TANG": 1, "TU_VI_CAN": 165000000000000000000, "HP_MAX": 90000000000000000, "MP_MAX": 45000000000000000, "ATK": 5400000000000000, "DEF": 2700000000000000, "MDEF": 2430000000000000, "TOC_DO": 30000}, {"CANH_GIOI": "Kim Tiên", "TANG": 2, "TU_VI_CAN": 225000000000000000000, "HP_MAX": 120000000000000000, "MP_MAX": 60000000000000000, "ATK": 7000000000000000, "DEF": 3500000000000000, "MDEF": 3150000000000000, "TOC_DO": 31400}, {"CANH_GIOI": "Kim Tiên", "TANG": 3, "TU_VI_CAN": 305000000000000000000, "HP_MAX": 160000000000000000, "MP_MAX": 80000000000000000, "ATK": 9100000000000000, "DEF": 4550000000000000, "MDEF": 4095000000000000, "TOC_DO": 32900}, {"CANH_GIOI": "Kim Tiên", "TANG": 4, "TU_VI_CAN": 415000000000000000000, "HP_MAX": 210000000000000000, "MP_MAX": 105000000000000000, "ATK": 11800000000000000, "DEF": 5900000000000000, "MDEF": 5310000000000000, "TOC_DO": 34500}, {"CANH_GIOI": "Kim Tiên", "TANG": 5, "TU_VI_CAN": 565000000000000000000, "HP_MAX": 275000000000000000, "MP_MAX": 137500000000000000, "ATK": 15300000000000000, "DEF": 7650000000000000, "MDEF": 6885000000000000, "TOC_DO": 36200}, {"CANH_GIOI": "Kim Tiên", "TANG": 6, "TU_VI_CAN": 770000000000000000000, "HP_MAX": 360000000000000000, "MP_MAX": 180000000000000000, "ATK": 19900000000000000, "DEF": 9950000000000000, "MDEF": 8955000000000000, "TOC_DO": 38000}, {"CANH_GIOI": "Kim Tiên", "TANG": 7, "TU_VI_CAN": 1050000000000000000000, "HP_MAX": 470000000000000000, "MP_MAX": 235000000000000000, "ATK": 25800000000000000, "DEF": 12900000000000000, "MDEF": 11610000000000000, "TOC_DO": 39900}, {"CANH_GIOI": "Kim Tiên", "TANG": 8, "TU_VI_CAN": 1430000000000000000000, "HP_MAX": 610000000000000000, "MP_MAX": 305000000000000000, "ATK": 33500000000000000, "DEF": 16750000000000000, "MDEF": 15075000000000000, "TOC_DO": 41900}, {"CANH_GIOI": "Kim Tiên", "TANG": 9, "TU_VI_CAN": 1950000000000000000000, "HP_MAX": 795000000000000000, "MP_MAX": 397500000000000000, "ATK": 43500000000000000, "DEF": 21750000000000000, "MDEF": 19575000000000000, "TOC_DO": 44000}, {"CANH_GIOI": "Kim Tiên", "TANG": 10, "TU_VI_CAN": 2650000000000000000000, "HP_MAX": 1050000000000000000, "MP_MAX": 525000000000000000, "ATK": 57000000000000000, "DEF": 28500000000000000, "MDEF": 25650000000000000, "TOC_DO": 46500}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 1, "TU_VI_CAN": 3600000000000000000000, "HP_MAX": 1450000000000000000, "MP_MAX": 725000000000000000, "ATK": 77000000000000000, "DEF": 38500000000000000, "MDEF": 34650000000000000, "TOC_DO": 49000}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 2, "TU_VI_CAN": 4900000000000000000000, "HP_MAX": 1950000000000000000, "MP_MAX": 975000000000000000, "ATK": 100000000000000000, "DEF": 50000000000000000, "MDEF": 45000000000000000, "TOC_DO": 51600}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 3, "TU_VI_CAN": 6600000000000000000000, "HP_MAX": 2600000000000000000, "MP_MAX": 1300000000000000000, "ATK": 130000000000000000, "DEF": 65000000000000000, "MDEF": 58500000000000000, "TOC_DO": 54300}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 4, "TU_VI_CAN": 8900000000000000000000, "HP_MAX": 3450000000000000000, "MP_MAX": 1725000000000000000, "ATK": 168000000000000000, "DEF": 84000000000000000, "MDEF": 75600000000000000, "TOC_DO": 57100}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 5, "TU_VI_CAN": 12000000000000000000000, "HP_MAX": 4550000000000000000, "MP_MAX": 2275000000000000000, "ATK": 218000000000000000, "DEF": 109000000000000000, "MDEF": 98100000000000000, "TOC_DO": 60000}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 6, "TU_VI_CAN": 16200000000000000000000, "HP_MAX": 6000000000000000000, "MP_MAX": 3000000000000000000, "ATK": 283000000000000000, "DEF": 141500000000000000, "MDEF": 127350000000000000, "TOC_DO": 63000}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 7, "TU_VI_CAN": 21799999999999997902848, "HP_MAX": 7900000000000000000, "MP_MAX": 3950000000000000000, "ATK": 368000000000000000, "DEF": 184000000000000000, "MDEF": 165600000000000000, "TOC_DO": 66100}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 8, "TU_VI_CAN": 29400000000000002097152, "HP_MAX": 10400000000000000000, "MP_MAX": 5200000000000000000, "ATK": 478000000000000000, "DEF": 239000000000000000, "MDEF": 215100000000000000, "TOC_DO": 69300}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 9, "TU_VI_CAN": 39600000000000004194304, "HP_MAX": 13700000000000000000, "MP_MAX": 6850000000000000000, "ATK": 620000000000000000, "DEF": 310000000000000000, "MDEF": 279000000000000000, "TOC_DO": 72600}, {"CANH_GIOI": "Thái Ất Chân Tiên", "TANG": 10, "TU_VI_CAN": 53500000000000001048576, "HP_MAX": 18000000000000000000, "MP_MAX": 9000000000000000000, "ATK": 800000000000000000, "DEF": 400000000000000000, "MDEF": 360000000000000000, "TOC_DO": 76000}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 1, "TU_VI_CAN": 72000000000000000000000, "HP_MAX": 24000000000000000000, "MP_MAX": 12000000000000000000, "ATK": 1050000000000000000, "DEF": 525000000000000000, "MDEF": 472500000000000000, "TOC_DO": 79500}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 2, "TU_VI_CAN": 97000000000000006291456, "HP_MAX": 32000000000000000000, "MP_MAX": 16000000000000000000, "ATK": 1380000000000000000, "DEF": 690000000000000000, "MDEF": 621000000000000000, "TOC_DO": 83200}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 3, "TU_VI_CAN": 129999999999999995805696, "HP_MAX": 42500000000000000000, "MP_MAX": 21250000000000000000, "ATK": 1810000000000000000, "DEF": 905000000000000000, "MDEF": 814500000000000000, "TOC_DO": 87000}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 4, "TU_VI_CAN": 175000000000000010485760, "HP_MAX": 56500000000000000000, "MP_MAX": 28250000000000000000, "ATK": 2370000000000000000, "DEF": 1185000000000000000, "MDEF": 1066500000000000000, "TOC_DO": 91000}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 5, "TU_VI_CAN": 234999999999999985319936, "HP_MAX": 75000000000000000000, "MP_MAX": 37500000000000000000, "ATK": 3100000000000000000, "DEF": 1550000000000000000, "MDEF": 1395000000000000000, "TOC_DO": 95200}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 6, "TU_VI_CAN": 315000000000000018874368, "HP_MAX": 99500000000000000000, "MP_MAX": 49750000000000000000, "ATK": 4050000000000000000, "DEF": 2025000000000000000, "MDEF": 1822500000000000000, "TOC_DO": 99600}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 7, "TU_VI_CAN": 425000000000000006291456, "HP_MAX": 132000000000000000000, "MP_MAX": 66000000000000000000, "ATK": 5300000000000000000, "DEF": 2650000000000000000, "MDEF": 2385000000000000000, "TOC_DO": 104200}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 8, "TU_VI_CAN": 569999999999999995805696, "HP_MAX": 175000000000000000000, "MP_MAX": 87500000000000000000, "ATK": 6900000000000000000, "DEF": 3450000000000000000, "MDEF": 3105000000000000000, "TOC_DO": 109000}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 9, "TU_VI_CAN": 770000000000000046137344, "HP_MAX": 232000000000000000000, "MP_MAX": 116000000000000000000, "ATK": 9000000000000000000, "DEF": 4500000000000000000, "MDEF": 4050000000000000000, "TOC_DO": 114000}, {"CANH_GIOI": "Thái Ất Kim Tiên", "TANG": 10, "TU_VI_CAN": 1039999999999999966445568, "HP_MAX": 308000000000000000000, "MP_MAX": 154000000000000000000, "ATK": 11700000000000000000, "DEF": 5850000000000000000, "MDEF": 5265000000000000000, "TOC_DO": 119500}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 1, "TU_VI_CAN": 1400000000000000083886080, "HP_MAX": 410000000000000000000, "MP_MAX": 205000000000000000000, "ATK": 15500000000000000000, "DEF": 7750000000000000000, "MDEF": 6975000000000000000, "TOC_DO": 125000}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 2, "TU_VI_CAN": 1900000000000000075497472, "HP_MAX": 545000000000000000000, "MP_MAX": 272500000000000000000, "ATK": 20500000000000000000, "DEF": 10250000000000000000, "MDEF": 9225000000000000000, "TOC_DO": 131000}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 3, "TU_VI_CAN": 2549999999999999769313280, "HP_MAX": 725000000000000000000, "MP_MAX": 362500000000000000000, "ATK": 27000000000000000000, "DEF": 13500000000000000000, "MDEF": 12150000000000000000, "TOC_DO": 137500}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 4, "TU_VI_CAN": 3450000000000000130023424, "HP_MAX": 960000000000000000000, "MP_MAX": 480000000000000000000, "ATK": 35500000000000000000, "DEF": 17750000000000000000, "MDEF": 15975000000000000000, "TOC_DO": 144500}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 5, "TU_VI_CAN": 4649999999999999895142400, "HP_MAX": 1270000000000000000000, "MP_MAX": 635000000000000000000, "ATK": 46500000000000000000, "DEF": 23250000000000000000, "MDEF": 20925000000000000000, "TOC_DO": 152000}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 6, "TU_VI_CAN": 6300000000000000377487360, "HP_MAX": 1680000000000000000000, "MP_MAX": 840000000000000000000, "ATK": 61000000000000000000, "DEF": 30500000000000000000, "MDEF": 27450000000000000000, "TOC_DO": 160000}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 7, "TU_VI_CAN": 8499999999999999588958208, "HP_MAX": 2220000000000000000000, "MP_MAX": 1110000000000000000000, "ATK": 80000000000000000000, "DEF": 40000000000000000000, "MDEF": 36000000000000000000, "TOC_DO": 168500}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 8, "TU_VI_CAN": 11499999999999999001755648, "HP_MAX": 2930000000000000000000, "MP_MAX": 1465000000000000000000, "ATK": 105000000000000000000, "DEF": 52500000000000000000, "MDEF": 47250000000000000000, "TOC_DO": 177500}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 9, "TU_VI_CAN": 15499999999999998934646784, "HP_MAX": 3870000000000000000000, "MP_MAX": 1935000000000000000000, "ATK": 138000000000000000000, "DEF": 69000000000000000000, "MDEF": 62100000000000000000, "TOC_DO": 187000}, {"CANH_GIOI": "Đại La Kim Tiên", "TANG": 10, "TU_VI_CAN": 20999999999999999110807552, "HP_MAX": 5100000000000000000000, "MP_MAX": 2550000000000000000000, "ATK": 180000000000000000000, "DEF": 90000000000000000000, "MDEF": 81000000000000000000, "TOC_DO": 197000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 1, "TU_VI_CAN": 28499999999999998179672064, "HP_MAX": 6700000000000000000000, "MP_MAX": 3350000000000000000000, "ATK": 235000000000000000000, "DEF": 117500000000000000000, "MDEF": 105750000000000000000, "TOC_DO": 208000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 2, "TU_VI_CAN": 38500000000000001233125376, "HP_MAX": 8800000000000000000000, "MP_MAX": 4400000000000000000000, "ATK": 305000000000000000000, "DEF": 152500000000000000000, "MDEF": 137250000000000000000, "TOC_DO": 219500}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 3, "TU_VI_CAN": 51999999999999996980101120, "HP_MAX": 11500000000000001048576, "MP_MAX": 5750000000000000524288, "ATK": 395000000000000000000, "DEF": 197500000000000000000, "MDEF": 177750000000000000000, "TOC_DO": 231500}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 4, "TU_VI_CAN": 69999999999999999899336704, "HP_MAX": 15000000000000000000000, "MP_MAX": 7500000000000000000000, "ATK": 510000000000000000000, "DEF": 255000000000000000000, "MDEF": 229500000000000000000, "TOC_DO": 244000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 5, "TU_VI_CAN": 95000000000000005385486336, "HP_MAX": 19600000000000000000000, "MP_MAX": 9800000000000000000000, "ATK": 660000000000000000000, "DEF": 330000000000000000000, "MDEF": 297000000000000000000, "TOC_DO": 257000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 6, "TU_VI_CAN": 127999999999999997852516352, "HP_MAX": 25500000000000001048576, "MP_MAX": 12750000000000000524288, "ATK": 855000000000000000000, "DEF": 427500000000000000000, "MDEF": 384750000000000000000, "TOC_DO": 270500}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 7, "TU_VI_CAN": 173000000000000009445572608, "HP_MAX": 33200000000000000000000, "MP_MAX": 16600000000000000000000, "ATK": 1110000000000000000000, "DEF": 555000000000000000000, "MDEF": 499500000000000000000, "TOC_DO": 284500}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 8, "TU_VI_CAN": 234000000000000012180258816, "HP_MAX": 43200000000000000000000, "MP_MAX": 21600000000000000000000, "ATK": 1440000000000000000000, "DEF": 720000000000000000000, "MDEF": 648000000000000000000, "TOC_DO": 299000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 9, "TU_VI_CAN": 315999999999999988255948800, "HP_MAX": 56199999999999997902848, "MP_MAX": 28099999999999998951424, "ATK": 1870000000000000000000, "DEF": 935000000000000000000, "MDEF": 841500000000000000000, "TOC_DO": 314000}, {"CANH_GIOI": "Cửu Thiên Huyền Tiên", "TANG": 10, "TU_VI_CAN": 427000000000000019142803456, "HP_MAX": 72999999999999997902848, "MP_MAX": 36499999999999998951424, "ATK": 2430000000000000000000, "DEF": 1215000000000000000000, "MDEF": 1093500000000000000000, "TOC_DO": 330000}, {"CANH_GIOI": "Tiên Vương", "TANG": 1, "TU_VI_CAN": 579999999999999996711665664, "HP_MAX": 94999999999999993708544, "MP_MAX": 47499999999999996854272, "ATK": 3150000000000000000000, "DEF": 1575000000000000000000, "MDEF": 1417500000000000131072, "TOC_DO": 347000}, {"CANH_GIOI": "Tiên Vương", "TANG": 2, "TU_VI_CAN": 784999999999999954080759808, "HP_MAX": 124999999999999997902848, "MP_MAX": 62499999999999998951424, "ATK": 4100000000000000000000, "DEF": 2050000000000000000000, "MDEF": 1845000000000000000000, "TOC_DO": 365000}, {"CANH_GIOI": "Tiên Vương", "TANG": 3, "TU_VI_CAN": 1059999999999999937118994432, "HP_MAX": 163000000000000002097152, "MP_MAX": 81500000000000001048576, "ATK": 5300000000000000000000, "DEF": 2650000000000000000000, "MDEF": 2384999999999999737856, "TOC_DO": 384000}, {"CANH_GIOI": "Tiên Vương", "TANG": 4, "TU_VI_CAN": 1430000000000000131701145600, "HP_MAX": 211999999999999991611392, "MP_MAX": 105999999999999995805696, "ATK": 6849999999999999475712, "DEF": 3424999999999999737856, "MDEF": 3082499999999999868928, "TOC_DO": 404000}, {"CANH_GIOI": "Tiên Vương", "TANG": 5, "TU_VI_CAN": 1930000000000000000905969664, "HP_MAX": 275000000000000002097152, "MP_MAX": 137500000000000001048576, "ATK": 8849999999999999475712, "DEF": 4424999999999999737856, "MDEF": 3982499999999999868928, "TOC_DO": 425000}, {"CANH_GIOI": "Tiên Vương", "TANG": 6, "TU_VI_CAN": 2600000000000000089523224576, "HP_MAX": 358000000000000004194304, "MP_MAX": 179000000000000002097152, "ATK": 11400000000000000000000, "DEF": 5700000000000000000000, "MDEF": 5129999999999999475712, "TOC_DO": 447000}, {"CANH_GIOI": "Tiên Vương", "TANG": 7, "TU_VI_CAN": 3500000000000000183945396224, "HP_MAX": 464999999999999989514240, "MP_MAX": 232499999999999994757120, "ATK": 14700000000000001048576, "DEF": 7350000000000000524288, "MDEF": 6615000000000000262144, "TOC_DO": 470000}, {"CANH_GIOI": "Tiên Vương", "TANG": 8, "TU_VI_CAN": 4749999999999999856957456384, "HP_MAX": 604999999999999997902848, "MP_MAX": 302499999999999998951424, "ATK": 19000000000000002097152, "DEF": 9500000000000001048576, "MDEF": 8550000000000000524288, "TOC_DO": 494000}, {"CANH_GIOI": "Tiên Vương", "TANG": 9, "TU_VI_CAN": 6400000000000000304942678016, "HP_MAX": 784999999999999989514240, "MP_MAX": 392499999999999994757120, "ATK": 24499999999999998951424, "DEF": 12249999999999999475712, "MDEF": 11024999999999999737856, "TOC_DO": 519000}, {"CANH_GIOI": "Tiên Vương", "TANG": 10, "TU_VI_CAN": 8649999999999999716364386304, "HP_MAX": 1020000000000000041943040, "MP_MAX": 510000000000000020971520, "ATK": 31500000000000001048576, "DEF": 15750000000000000524288, "MDEF": 14175000000000000262144, "TOC_DO": 545000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 1, "TU_VI_CAN": 11699999999999999578220789760, "HP_MAX": 1330000000000000079691776, "MP_MAX": 665000000000000039845888, "ATK": 40999999999999997902848, "DEF": 20499999999999998951424, "MDEF": 18449999999999999475712, "TOC_DO": 572000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 2, "TU_VI_CAN": 15799999999999999825114300416, "HP_MAX": 1729999999999999911919616, "MP_MAX": 864999999999999955959808, "ATK": 52999999999999997902848, "DEF": 26499999999999998951424, "MDEF": 23850000000000001572864, "TOC_DO": 600000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 3, "TU_VI_CAN": 21300000000000000585390620672, "HP_MAX": 2250000000000000096468992, "MP_MAX": 1125000000000000048234496, "ATK": 68500000000000003145728, "DEF": 34250000000000001572864, "MDEF": 30824999999999999737856, "TOC_DO": 629000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 4, "TU_VI_CAN": 28799999999999998623462981632, "HP_MAX": 2929999999999999945474048, "MP_MAX": 1464999999999999972737024, "ATK": 88499999999999994757120, "DEF": 44249999999999997378560, "MDEF": 39824999999999997640704, "TOC_DO": 659000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 5, "TU_VI_CAN": 38899999999999999499837636608, "HP_MAX": 3809999999999999844810752, "MP_MAX": 1904999999999999922405376, "ATK": 113999999999999995805696, "DEF": 56999999999999997902848, "MDEF": 51299999999999998951424, "TOC_DO": 690000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 6, "TU_VI_CAN": 52500000000000003858692571136, "HP_MAX": 4950000000000000373293056, "MP_MAX": 2475000000000000186646528, "ATK": 147000000000000002097152, "DEF": 73500000000000001048576, "MDEF": 66150000000000002621440, "TOC_DO": 722000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 7, "TU_VI_CAN": 70900000000000004323085910016, "HP_MAX": 6440000000000000385875968, "MP_MAX": 3220000000000000192937984, "ATK": 189999999999999987417088, "DEF": 94999999999999993708544, "MDEF": 85499999999999992659968, "TOC_DO": 755000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 8, "TU_VI_CAN": 95699999999999999594863788032, "HP_MAX": 8369999999999999811256320, "MP_MAX": 4184999999999999905628160, "ATK": 245000000000000014680064, "DEF": 122500000000000007340032, "MDEF": 110249999999999993184256, "TOC_DO": 789000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 9, "TU_VI_CAN": 129000000000000001439216697344, "HP_MAX": 10879999999999999731564544, "MP_MAX": 5439999999999999865782272, "ATK": 315999999999999974834176, "DEF": 157999999999999987417088, "MDEF": 142200000000000002097152, "TOC_DO": 824000}, {"CANH_GIOI": "Tiên Hoàng", "TANG": 10, "TU_VI_CAN": 173999999999999989667650863104, "HP_MAX": 14139999999999999773507584, "MP_MAX": 7069999999999999886753792, "ATK": 408000000000000016777216, "DEF": 204000000000000008388608, "MDEF": 183599999999999987417088, "TOC_DO": 860000}, {"CANH_GIOI": "Tiên Đế", "TANG": 1, "TU_VI_CAN": 235000000000000008895011487744, "HP_MAX": 18399999999999999261802496, "MP_MAX": 9199999999999999630901248, "ATK": 530000000000000012582912, "DEF": 265000000000000006291456, "MDEF": 238499999999999998951424, "TOC_DO": 900000}, {"CANH_GIOI": "Tiên Đế", "TANG": 2, "TU_VI_CAN": 316999999999999987444602634240, "HP_MAX": 23899999999999999437963264, "MP_MAX": 11949999999999999718981632, "ATK": 684999999999999964348416, "DEF": 342499999999999982174208, "MDEF": 308249999999999997378560, "TOC_DO": 942000}, {"CANH_GIOI": "Tiên Đế", "TANG": 3, "TU_VI_CAN": 428000000000000028776817754112, "HP_MAX": 30999999999999997869293568, "MP_MAX": 15499999999999998934646784, "ATK": 885000000000000014680064, "DEF": 442500000000000007340032, "MDEF": 398249999999999993184256, "TOC_DO": 986000}, {"CANH_GIOI": "Tiên Đế", "TANG": 4, "TU_VI_CAN": 577999999999999989538264973312, "HP_MAX": 40299999999999999807062016, "MP_MAX": 20149999999999999903531008, "ATK": 1139999999999999991611392, "DEF": 569999999999999995805696, "MDEF": 513000000000000023068672, "TOC_DO": 1032000}, {"CANH_GIOI": "Tiên Đế", "TANG": 5, "TU_VI_CAN": 779999999999999936697013895168, "HP_MAX": 52399999999999997617635328, "MP_MAX": 26199999999999998808817664, "ATK": 1470000000000000088080384, "DEF": 735000000000000044040192, "MDEF": 661499999999999959105536, "TOC_DO": 1080000}, {"CANH_GIOI": "Tiên Đế", "TANG": 6, "TU_VI_CAN": 1050000000000000006805107245056, "HP_MAX": 68100000000000001166016512, "MP_MAX": 34050000000000000583008256, "ATK": 1900000000000000075497472, "DEF": 950000000000000037748736, "MDEF": 854999999999999993708544, "TOC_DO": 1130000}, {"CANH_GIOI": "Tiên Đế", "TANG": 7, "TU_VI_CAN": 1419999999999999910016677052416, "HP_MAX": 88500000000000007910457344, "MP_MAX": 44250000000000003955228672, "ATK": 2450000000000000146800640, "DEF": 1225000000000000073400320, "MDEF": 1102500000000000066060288, "TOC_DO": 1182000}, {"CANH_GIOI": "Tiên Đế", "TANG": 8, "TU_VI_CAN": 1920000000000000060696477827072, "HP_MAX": 115000000000000002902458368, "MP_MAX": 57500000000000001451229184, "ATK": 3159999999999999882559488, "DEF": 1579999999999999941279744, "MDEF": 1422000000000000054525952, "TOC_DO": 1236000}, {"CANH_GIOI": "Tiên Đế", "TANG": 9, "TU_VI_CAN": 2590000000000000166905918783488, "HP_MAX": 149499999999999993465274368, "MP_MAX": 74749999999999996732637184, "ATK": 4080000000000000167772160, "DEF": 2040000000000000083886080, "MDEF": 1835999999999999941279744, "TOC_DO": 1292000}, {"CANH_GIOI": "Tiên Đế", "TANG": 10, "TU_VI_CAN": 3500000000000000210333675290624, "HP_MAX": 194400000000000000603979776, "MP_MAX": 97200000000000000301989888, "ATK": 5260000000000000008388608, "DEF": 2630000000000000004194304, "MDEF": 2367000000000000111149056, "TOC_DO": 1350000}, {"CANH_GIOI": "Bán Thần", "TANG": 1, "TU_VI_CAN": 4719999999999999891193446006784, "HP_MAX": 252999999999999999513460736, "MP_MAX": 126499999999999999756730368, "ATK": 6839999999999999949668352, "DEF": 3419999999999999974834176, "MDEF": 3078000000000000138412032, "TOC_DO": 1410000}, {"CANH_GIOI": "Bán Thần", "TANG": 2, "TU_VI_CAN": 6370000000000000303994295549952, "HP_MAX": 328999999999999983206006784, "MP_MAX": 164499999999999991603003392, "ATK": 8889999999999999995805696, "DEF": 4444999999999999997902848, "MDEF": 4000500000000000212860928, "TOC_DO": 1473000}, {"CANH_GIOI": "Bán Thần", "TANG": 3, "TU_VI_CAN": 8600000000000000002122787586048, "HP_MAX": 428000000000000029326573568, "MP_MAX": 214000000000000014663286784, "ATK": 11560000000000000385875968, "DEF": 5780000000000000192937984, "MDEF": 5201999999999999744147456, "TOC_DO": 1539000}, {"CANH_GIOI": "Bán Thần", "TANG": 4, "TU_VI_CAN": 11599999999999999217351731970048, "HP_MAX": 556000000000000027179089920, "MP_MAX": 278000000000000013589544960, "ATK": 15029999999999999903531008, "DEF": 7514999999999999951765504, "MDEF": 6763500000000000063963136, "TOC_DO": 1608000}, {"CANH_GIOI": "Bán Thần", "TANG": 5, "TU_VI_CAN": 15699999999999999833681149558784, "HP_MAX": 723000000000000009881780224, "MP_MAX": 361500000000000004940890112, "ATK": 19540000000000001937768448, "DEF": 9770000000000000968884224, "MDEF": 8793000000000000442499072, "TOC_DO": 1680000}, {"CANH_GIOI": "Bán Thần", "TANG": 6, "TU_VI_CAN": 21200000000000001209683981369344, "HP_MAX": 939999999999999952017162240, "MP_MAX": 469999999999999976008581120, "ATK": 25400000000000001828716544, "DEF": 12700000000000000914358272, "MDEF": 11430000000000000608174080, "TOC_DO": 1755000}, {"CANH_GIOI": "Bán Thần", "TANG": 7, "TU_VI_CAN": 28599999999999998148015470673920, "HP_MAX": 1221999999999999937622310912, "MP_MAX": 610999999999999968811155456, "ATK": 33019999999999999370854400, "DEF": 16509999999999999685427200, "MDEF": 14859000000000000790626304, "TOC_DO": 1833000}, {"CANH_GIOI": "Bán Thần", "TANG": 8, "TU_VI_CAN": 38599999999999997783911765639168, "HP_MAX": 1589000000000000032933675008, "MP_MAX": 794500000000000016466837504, "ATK": 42930000000000003569352704, "DEF": 21465000000000001784676352, "MDEF": 19318500000000000317718528, "TOC_DO": 1914000}, {"CANH_GIOI": "Bán Thần", "TANG": 9, "TU_VI_CAN": 52100000000000003822591223529472, "HP_MAX": 2066000000000000011509170176, "MP_MAX": 1033000000000000005754585088, "ATK": 55810000000000000046137344, "DEF": 27905000000000000023068672, "MDEF": 25114500000000000879755264, "TOC_DO": 1998000}, {"CANH_GIOI": "Bán Thần", "TANG": 10, "TU_VI_CAN": 70299999999999995683947098931200, "HP_MAX": 2685999999999999728376872960, "MP_MAX": 1342999999999999864188436480, "ATK": 72550000000000001816133632, "DEF": 36275000000000000908066816, "MDEF": 32647500000000001246756864, "TOC_DO": 2085000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 1, "TU_VI_CAN": 94900000000000003885523231834112, "HP_MAX": 3489999999999999944668741632, "MP_MAX": 1744999999999999972334370816, "ATK": 94300000000000008564768768, "DEF": 47150000000000004282384384, "MDEF": 42435000000000001277165568, "TOC_DO": 2175000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 2, "TU_VI_CAN": 128000000000000002545231979347968, "HP_MAX": 4539999999999999779950034944, "MP_MAX": 2269999999999999889975017472, "ATK": 122599999999999997835739136, "DEF": 61299999999999998917869568, "MDEF": 55170000000000002462056448, "TOC_DO": 2269000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 3, "TU_VI_CAN": 172999999999999998654965493006336, "HP_MAX": 5900000000000000435737853952, "MP_MAX": 2950000000000000217868926976, "ATK": 159399999999999987769409536, "DEF": 79699999999999993884704768, "MDEF": 71729999999999997932208128, "TOC_DO": 2367000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 4, "TU_VI_CAN": 234000000000000008593651886194688, "HP_MAX": 7670000000000000456508047360, "MP_MAX": 3835000000000000228254023680, "ATK": 207199999999999986645336064, "DEF": 103599999999999993322668032, "MDEF": 93239999999999999144361984, "TOC_DO": 2469000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 5, "TU_VI_CAN": 316000000000000011913040983228416, "HP_MAX": 9969999999999999415045586944, "MP_MAX": 4984999999999999707522793472, "ATK": 269400000000000008472494080, "DEF": 134700000000000004236247040, "MDEF": 121230000000000003812622336, "TOC_DO": 2575000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 6, "TU_VI_CAN": 426999999999999997513210714390528, "HP_MAX": 12960000000000000040265318400, "MP_MAX": 6480000000000000020132659200, "ATK": 350200000000000034175188992, "DEF": 175100000000000017087594496, "MDEF": 157589999999999987891044352, "TOC_DO": 2685000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 7, "TU_VI_CAN": 575999999999999993439145397583872, "HP_MAX": 16849999999999999110639779840, "MP_MAX": 8424999999999999555319889920, "ATK": 455300000000000025593643008, "DEF": 227650000000000012796821504, "MDEF": 204885000000000004645191680, "TOC_DO": 2799000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 8, "TU_VI_CAN": 778000000000000046432485562646528, "HP_MAX": 21909999999999998138836320256, "MP_MAX": 10954999999999999069418160128, "ATK": 591900000000000028563210240, "DEF": 295950000000000014281605120, "MDEF": 266355000000000012853444608, "TOC_DO": 2917000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 9, "TU_VI_CAN": 1050000000000000029323105381908480, "HP_MAX": 28479999999999999762703056896, "MP_MAX": 14239999999999999881351528448, "ATK": 769499999999999968031014912, "DEF": 384749999999999984015507456, "MDEF": 346275000000000026845642752, "TOC_DO": 3039000}, {"CANH_GIOI": "Hạ Vị Thần", "TANG": 10, "TU_VI_CAN": 1419999999999999957304473139806208, "HP_MAX": 37020000000000000695314939904, "MP_MAX": 18510000000000000347657469952, "ATK": 100039999999999992802574336, "DEF": 50019999999999996401287168, "MDEF": 45017999999999995902164992, "TOC_DO": 3165000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 1, "TU_VI_CAN": 1919999999999999930092088633327616, "HP_MAX": 48099999999999999732034306048, "MP_MAX": 24049999999999999866017153024, "ATK": 1300000000000000044761612288, "DEF": 650000000000000022380806144, "MDEF": 584999999999999978911039488, "TOC_DO": 3295000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 2, "TU_VI_CAN": 2590000000000000072330326608707584, "HP_MAX": 62500000000000001242789052416, "MP_MAX": 31250000000000000621394526208, "ATK": 1690000000000000030702305280, "DEF": 845000000000000015351152640, "MDEF": 760499999999999945096560640, "TOC_DO": 3430000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 3, "TU_VI_CAN": 3500000000000000097743684606361600, "HP_MAX": 81200000000000003387923890176, "MP_MAX": 40600000000000001693961945088, "ATK": 2199999999999999864305876992, "DEF": 1099999999999999932152938496, "MDEF": 990000000000000048888807424, "TOC_DO": 3570000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 4, "TU_VI_CAN": 4730000000000000255620912118759424, "HP_MAX": 105500000000000007586589966336, "MP_MAX": 52750000000000003793294983168, "ATK": 2860000000000000263402291200, "DEF": 1430000000000000131701145600, "MDEF": 1287000000000000118531031040, "TOC_DO": 3715000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 5, "TU_VI_CAN": 6390000000000000384330881432551424, "HP_MAX": 137200000000000006331050229760, "MP_MAX": 68600000000000003165525114880, "ATK": 3719999999999999950473658368, "DEF": 1859999999999999975236829184, "MDEF": 1673999999999999867761983488, "TOC_DO": 3865000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 6, "TU_VI_CAN": 8630000000000000446886839580622848, "HP_MAX": 178400000000000002590402150400, "MP_MAX": 89200000000000001295201075200, "ATK": 4839999999999999811424092160, "DEF": 2419999999999999905712046080, "MDEF": 2178000000000000052579794944, "TOC_DO": 4020000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 7, "TU_VI_CAN": 11650000000000000778280284142436352, "HP_MAX": 231899999999999988595318325248, "MP_MAX": 115949999999999994297659162624, "ATK": 6290000000000000421678546944, "DEF": 3145000000000000210839273472, "MDEF": 2830500000000000134779764736, "TOC_DO": 4180000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 8, "TU_VI_CAN": 15730000000000000233409205279653888, "HP_MAX": 301499999999999991499253088256, "MP_MAX": 150749999999999995749626544128, "ATK": 8180000000000000015233712128, "DEF": 4090000000000000007616856064, "MDEF": 3681000000000000171781914624, "TOC_DO": 4345000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 9, "TU_VI_CAN": 21240000000000000757867603812155392, "HP_MAX": 391999999999999967825326243840, "MP_MAX": 195999999999999983912663121920, "ATK": 1063000000000000036389781504, "DEF": 531500000000000018194890752, "MDEF": 478350000000000030119297024, "TOC_DO": 4515000}, {"CANH_GIOI": "Trung Vị Thần", "TANG": 10, "TU_VI_CAN": 28669999999999998041883953309155328, "HP_MAX": 509599999999999993357296205824, "MP_MAX": 254799999999999996678648102912, "ATK": 1381999999999999917758087168, "DEF": 690999999999999958879043584, "MDEF": 621900000000000059198406656, "TOC_DO": 4690000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 1, "TU_VI_CAN": 38699999999999998527868266732322816, "HP_MAX": 661999999999999967564675416064, "MP_MAX": 330999999999999983782337708032, "ATK": 1796999999999999952134602752, "DEF": 898499999999999976067301376, "MDEF": 808649999999999950972780544, "TOC_DO": 4870000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 2, "TU_VI_CAN": 52199999999999998657825013512536064, "HP_MAX": 860000000000000056507274100736, "MP_MAX": 430000000000000028253637050368, "ATK": 2335999999999999874909077504, "DEF": 1167999999999999937454538752, "MDEF": 1051199999999999957452980224, "TOC_DO": 5055000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 3, "TU_VI_CAN": 70499999999999997604205665345077248, "HP_MAX": 1117999999999999989016963317760, "MP_MAX": 558999999999999994508481658880, "ATK": 3036999999999999935625822208, "DEF": 1518499999999999967812911104, "MDEF": 1366650000000000135958364160, "TOC_DO": 5245000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 4, "TU_VI_CAN": 95199999999999998046942202865647616, "HP_MAX": 1453000000000000042121683795968, "MP_MAX": 726500000000000021060841897984, "ATK": 3947999999999999798472081408, "DEF": 1973999999999999899236040704, "MDEF": 1776599999999999936800227328, "TOC_DO": 5440000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 5, "TU_VI_CAN": 128500000000000000212176585627795456, "HP_MAX": 1888999999999999928068290379776, "MP_MAX": 944499999999999964034145189888, "ATK": 5132000000000000311183802368, "DEF": 2566000000000000155591901184, "MDEF": 2309400000000000030081548288, "TOC_DO": 5640000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 6, "TU_VI_CAN": 173499999999999982198621667852288000, "HP_MAX": 2455999999999999920484049223680, "MP_MAX": 1227999999999999960242024611840, "ATK": 6671999999999999776393265152, "DEF": 3335999999999999888196632576, "MDEF": 3002399999999999734450225152, "TOC_DO": 5845000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 7, "TU_VI_CAN": 234199999999999982987909530120093696, "HP_MAX": 3193000000000000149904424960000, "MP_MAX": 1596500000000000074952212480000, "ATK": 8674000000000000510530682880, "DEF": 4337000000000000255265341440, "MDEF": 3903300000000000229738807296, "TOC_DO": 6055000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 8, "TU_VI_CAN": 316200000000000016571488123083554816, "HP_MAX": 4151000000000000180775844577280, "MP_MAX": 2075500000000000090387922288640, "ATK": 11275999999999999108592959488, "DEF": 5637999999999999554296479744, "MDEF": 5074199999999999488915668992, "TOC_DO": 6270000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 9, "TU_VI_CAN": 426899999999999997345714965600796672, "HP_MAX": 5396000000000000277308321562624, "MP_MAX": 2698000000000000138654160781312, "ATK": 14659000000000001055974752256, "DEF": 7329500000000000527987376128, "MDEF": 6596550000000000255286312960, "TOC_DO": 6490000}, {"CANH_GIOI": "Thượng Vị Thần", "TANG": 10, "TU_VI_CAN": 576300000000000031988042295979016192, "HP_MAX": 7015000000000000557480983658496, "MP_MAX": 3507500000000000278740491829248, "ATK": 19057000000000000626780012544, "DEF": 9528500000000000313390006272, "MDEF": 8575649999999999952197517312, "TOC_DO": 6715000}, {"CANH_GIOI": "Chân Thần", "TANG": 1, "TU_VI_CAN": 777999999999999954198765194098769920, "HP_MAX": 9119999999999999866095804612608, "MP_MAX": 4559999999999999933047902306304, "ATK": 24769999999999999501750239232, "DEF": 12384999999999999750875119616, "MDEF": 11146499999999999335982956544, "TOC_DO": 6945000}, {"CANH_GIOI": "Chân Thần", "TANG": 2, "TU_VI_CAN": 1050000000000000022405576354267398144, "HP_MAX": 11860000000000000838188100747264, "MP_MAX": 5930000000000000419094050373632, "ATK": 32199999999999998613665087488, "DEF": 16099999999999999306832543744, "MDEF": 14489999999999999815953940480, "TOC_DO": 7180000}, {"CANH_GIOI": "Chân Thần", "TANG": 3, "TU_VI_CAN": 1418000000000000140727841910320791552, "HP_MAX": 15420000000000001032826354925568, "MP_MAX": 7710000000000000516413177462784, "ATK": 41859999999999999956983218176, "DEF": 20929999999999999978491609088, "MDEF": 18837000000000000860251750400, "TOC_DO": 7420000}, {"CANH_GIOI": "Chân Thần", "TANG": 4, "TU_VI_CAN": 1913999999999999883148855558524633088, "HP_MAX": 20049999999999998977238095626240, "MP_MAX": 10024999999999999488619047813120, "ATK": 54419999999999997023252119552, "DEF": 27209999999999998511626059776, "MDEF": 24489000000000000419682058240, "TOC_DO": 7665000}, {"CANH_GIOI": "Chân Thần", "TANG": 5, "TU_VI_CAN": 2583999999999999910094943073219903488, "HP_MAX": 26069999999999999091314037620736, "MP_MAX": 13034999999999999545657018810368, "ATK": 70749999999999999084668649472, "DEF": 35374999999999999542334324736, "MDEF": 31837500000000001347319496704, "TOC_DO": 7915000}, {"CANH_GIOI": "Chân Thần", "TANG": 6, "TU_VI_CAN": 3487999999999999902400126051353100288, "HP_MAX": 33889999999999999860427253088256, "MP_MAX": 16944999999999999930213626544128, "ATK": 91979999999999996345855246336, "DEF": 45989999999999998172927623168, "MDEF": 41390999999999999235244163072, "TOC_DO": 8170000}, {"CANH_GIOI": "Chân Thần", "TANG": 7, "TU_VI_CAN": 4709000000000000240046470451232243712, "HP_MAX": 44060000000000002548077932052480, "MP_MAX": 22030000000000001274038966026240, "ATK": 119569999999999994054389530624, "DEF": 59784999999999997027194765312, "MDEF": 53806500000000000842912497664, "TOC_DO": 8430000}, {"CANH_GIOI": "Chân Thần", "TANG": 8, "TU_VI_CAN": 6356999999999999698409221311994789888, "HP_MAX": 57280000000000003030503154253824, "MP_MAX": 28640000000000001515251577126912, "ATK": 155440000000000002967017095168, "DEF": 77720000000000001483508547584, "MDEF": 69947999999999999575939088384, "TOC_DO": 8695000}, {"CANH_GIOI": "Chân Thần", "TANG": 9, "TU_VI_CAN": 8582000000000000578626437009211654144, "HP_MAX": 74460000000000003602930489884672, "MP_MAX": 37230000000000001801465244942336, "ATK": 202070000000000007657557590016, "DEF": 101035000000000003828778795008, "MDEF": 90931499999999999927463706624, "TOC_DO": 8965000}, {"CANH_GIOI": "Chân Thần", "TANG": 10, "TU_VI_CAN": 1158600000000000002544696233717399552, "HP_MAX": 96800000000000006203251330383872, "MP_MAX": 48400000000000003101625665191936, "ATK": 262690000000000010095823945728, "DEF": 131345000000000005047911972864, "MDEF": 118210500000000002783902171136, "TOC_DO": 9240000}, {"CANH_GIOI": "Thần Vương", "TANG": 1, "TU_VI_CAN": 1564000000000000023254282696778579968, "HP_MAX": 125800000000000006498430473994240, "MP_MAX": 62900000000000003249215236997120, "ATK": 341499999999999981035639013376, "DEF": 170749999999999990517819506688, "MDEF": 153675000000000005539786391552, "TOC_DO": 9520000}, {"CANH_GIOI": "Thần Vương", "TANG": 2, "TU_VI_CAN": 2110999999999999981378258248319107072, "HP_MAX": 163499999999999987066325000257536, "MP_MAX": 81749999999999993533162500128768, "ATK": 444000000000000024591372124160, "DEF": 222000000000000012295686062080, "MDEF": 199800000000000011066117455872, "TOC_DO": 9805000}, {"CANH_GIOI": "Thần Vương", "TANG": 3, "TU_VI_CAN": 2850000000000000039733142591629164544, "HP_MAX": 212599999999999999554986627301376, "MP_MAX": 106299999999999999777493313650688, "ATK": 577200000000000031968783761408, "DEF": 288600000000000015984391880704, "MDEF": 259740000000000003830641065984, "TOC_DO": 10095000}, {"CANH_GIOI": "Thần Vương", "TANG": 4, "TU_VI_CAN": 3847999999999999758291686709149040640, "HP_MAX": 276400000000000011013019848933376, "MP_MAX": 138200000000000005506509924466688, "ATK": 750400000000000028882581323776, "DEF": 375200000000000014441290661888, "MDEF": 337680000000000027070910431232, "TOC_DO": 10390000}, {"CANH_GIOI": "Thần Vương", "TANG": 5, "TU_VI_CAN": 5195000000000000281618401482739023872, "HP_MAX": 359299999999999977505230656897024, "MP_MAX": 179649999999999988752615328448512, "ATK": 975499999999999955924844281856, "DEF": 487749999999999977962422140928, "MDEF": 438975000000000029424300851200, "TOC_DO": 10690000}, {"CANH_GIOI": "Thần Vương", "TANG": 6, "TU_VI_CAN": 7012999999999999671929944876349652992, "HP_MAX": 467100000000000017985685042495488, "MP_MAX": 233550000000000008992842521247744, "ATK": 1268199999999999921578594795520, "DEF": 634099999999999960789297397760, "MDEF": 570690000000000035079111835648, "TOC_DO": 10995000}, {"CANH_GIOI": "Thần Vương", "TANG": 7, "TU_VI_CAN": 9468000000000000460077879882713923584, "HP_MAX": 607199999999999989781126046547968, "MP_MAX": 303599999999999994890563023273984, "ATK": 1648700000000000033149698441216, "DEF": 824350000000000016574849220608, "MDEF": 741914999999999958622368956416, "TOC_DO": 11305000}, {"CANH_GIOI": "Thần Vương", "TANG": 8, "TU_VI_CAN": 1278200000000000066824874242628124672, "HP_MAX": 789399999999999988281260116017152, "MP_MAX": 394699999999999994140630058008576, "ATK": 2143300000000000100799594102784, "DEF": 1071650000000000050399797051392, "MDEF": 964484999999999960917324333056, "TOC_DO": 11620000}, {"CANH_GIOI": "Thần Vương", "TANG": 9, "TU_VI_CAN": 1725600000000000100236599967034114048, "HP_MAX": 1026200000000000034423055849619456, "MP_MAX": 513100000000000017211527924809728, "ATK": 2786300000000000073334486204416, "DEF": 1393150000000000036667243102208, "MDEF": 1253834999999999976705523449856, "TOC_DO": 11940000}, {"CANH_GIOI": "Thần Vương", "TANG": 10, "TU_VI_CAN": 2329599999999999917484243884317868032, "HP_MAX": 1334100000000000089550325282766848, "MP_MAX": 667050000000000044775162641383424, "ATK": 3622199999999999868744859910144, "DEF": 1811099999999999934372429955072, "MDEF": 1629990000000000137967670657024, "TOC_DO": 12265000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 1, "TU_VI_CAN": 31449999999999998035851205033597075456, "HP_MAX": 1733999999999999999014092404686848, "MP_MAX": 866999999999999999507046202343424, "ATK": 4708999999999999753333451522048, "DEF": 2354499999999999876666725761024, "MDEF": 2119049999999999860852555513856, "TOC_DO": 12600000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 2, "TU_VI_CAN": 42459999999999999531492872071579435008, "HP_MAX": 2253999999999999890008707195469824, "MP_MAX": 1126999999999999945004353597734912, "ATK": 6122000000000000368868702814208, "DEF": 3061000000000000184434351407104, "MDEF": 2754899999999999997105930240000, "TOC_DO": 12940000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 3, "TU_VI_CAN": 57320000000000000666566461306179682304, "HP_MAX": 2930000000000000123001195420712960, "MP_MAX": 1465000000000000061500597710356480, "ATK": 7959000000000000310539691491328, "DEF": 3979500000000000155269845745664, "MDEF": 3581549999999999970857875144704, "TOC_DO": 13285000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 4, "TU_VI_CAN": 77379999999999999720073704486721290240, "HP_MAX": 3808999999999999871671177895215104, "MP_MAX": 1904499999999999935835588947607552, "ATK": 10347000000000000248811884642304, "DEF": 5173500000000000124405942321152, "MDEF": 4656149999999999886785366720512, "TOC_DO": 13635000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 5, "TU_VI_CAN": 104459999999999993602283139059461128192, "HP_MAX": 4952000000000000154763657543155712, "MP_MAX": 2476000000000000077381828771577856, "ATK": 13450999999999999436835432431616, "DEF": 6725499999999999718417716215808, "MDEF": 6052949999999999971755925962752, "TOC_DO": 13990000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 6, "TU_VI_CAN": 141020000000000007301469418635720130560, "HP_MAX": 6437999999999999957443378824609792, "MP_MAX": 3218999999999999978721689412304896, "ATK": 17486000000000000210905711247360, "DEF": 8743000000000000105452855623680, "MDEF": 7868699999999999531957616640000, "TOC_DO": 14350000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 7, "TU_VI_CAN": 190379999999999996987334145677253935104, "HP_MAX": 8368999999999999669611091380404224, "MP_MAX": 4184499999999999834805545690202112, "ATK": 22732000000000001371877515722752, "DEF": 11366000000000000685938757861376, "MDEF": 10229400000000001067704844812288, "TOC_DO": 14715000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 8, "TU_VI_CAN": 257010000000000016358337038736693395456, "HP_MAX": 10879999999999999315624792770478080, "MP_MAX": 5439999999999999657812396385239040, "ATK": 29551999999999999024881362534400, "DEF": 14775999999999999512440681267200, "MDEF": 13298400000000000687096519983104, "TOC_DO": 15085000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 9, "TU_VI_CAN": 346960000000000021671948989314824667136, "HP_MAX": 14144000000000000263233735208468480, "MP_MAX": 7072000000000000131616867604234240, "ATK": 38418000000000000927745953497088, "DEF": 19209000000000000463872976748544, "MDEF": 17288100000000001093025623179264, "TOC_DO": 15460000}, {"CANH_GIOI": "Thần Hoàng", "TANG": 10, "TU_VI_CAN": 468400000000000029727766578980397776896, "HP_MAX": 18386999999999999974086904303845376, "MP_MAX": 9193499999999999987043452151922688, "ATK": 49942999999999997209229706395648, "DEF": 24971499999999998604614853197824, "MDEF": 22474349999999998293793405140992, "TOC_DO": 15840000}, {"CANH_GIOI": "Thần Tôn", "TANG": 1, "TU_VI_CAN": 632299999999999971201946280542517329920, "HP_MAX": 23899999999999999102770547202719744, "MP_MAX": 11949999999999999551385273601359872, "ATK": 64919999999999997654253145423872, "DEF": 32459999999999998827126572711936, "MDEF": 29214000000000001646573691863040, "TOC_DO": 16225000}, {"CANH_GIOI": "Thần Tôn", "TANG": 2, "TU_VI_CAN": 853599999999999941644867242997086945280, "HP_MAX": 31070000000000002061781924262707200, "MP_MAX": 15535000000000001030890962131353600, "ATK": 84400000000000007195171879911424, "DEF": 42200000000000003597585939955712, "MDEF": 37979999999999999634947644063744, "TOC_DO": 16615000}, {"CANH_GIOI": "Thần Tôn", "TANG": 3, "TU_VI_CAN": 1152400000000000039263720800971397267456, "HP_MAX": 40390000000000000839731744205701120, "MP_MAX": 20195000000000000419865872102850560, "ATK": 109720000000000003949403891040256, "DEF": 54860000000000001974701945520128, "MDEF": 49374000000000000876511825494016, "TOC_DO": 17010000}, {"CANH_GIOI": "Thần Tôn", "TANG": 4, "TU_VI_CAN": 1555700000000000116301746000580432625664, "HP_MAX": 52510000000000002001719521047478272, "MP_MAX": 26255000000000001000859760523739136, "ATK": 142639999999999991960149786886144, "DEF": 71319999999999995980074893443072, "MDEF": 64188000000000001786386956943360, "TOC_DO": 17410000}, {"CANH_GIOI": "Thần Tôn", "TANG": 5, "TU_VI_CAN": 2100200000000000032925176257281680998400, "HP_MAX": 68259999999999997541649707197005824, "MP_MAX": 34129999999999998770824853598502912, "ATK": 185429999999999984425873327521792, "DEF": 92714999999999992212936663760896, "MDEF": 83443499999999991190203146436608, "TOC_DO": 17815000}, {"CANH_GIOI": "Thần Tôn", "TANG": 6, "TU_VI_CAN": 2835300000000000161315549361742138048512, "HP_MAX": 88739999999999996795965319285833728, "MP_MAX": 44369999999999998397982659642916864, "ATK": 241060000000000003932074234871808, "DEF": 120530000000000001966037117435904, "MDEF": 108476999999999994563674001899520, "TOC_DO": 18225000}, {"CANH_GIOI": "Thần Tôn", "TANG": 7, "TU_VI_CAN": 3827699999999999962396010522258045927424, "HP_MAX": 115360000000000007833317863053066240, "MP_MAX": 57680000000000003916658931526533120, "ATK": 313380000000000003028258496970752, "DEF": 156690000000000001514129248485376, "MDEF": 141020999999999999561276472688640, "TOC_DO": 18640000}, {"CANH_GIOI": "Thần Tôn", "TANG": 8, "TU_VI_CAN": 5167399999999999749594569635632135536640, "HP_MAX": 149970000000000000029424681358458880, "MP_MAX": 74985000000000000014712340679229440, "ATK": 407390000000000033323769976061952, "DEF": 203695000000000016661884988030976, "MDEF": 183325499999999986172658874056704, "TOC_DO": 19060000}, {"CANH_GIOI": "Thần Tôn", "TANG": 9, "TU_VI_CAN": 6975999999999999927581780657316976132096, "HP_MAX": 194960000000000014338568392926035968, "MP_MAX": 97480000000000007169284196463017984, "ATK": 529609999999999968138149918408704, "DEF": 264804999999999984069074959204352, "MDEF": 238324500000000000073686270869504, "TOC_DO": 19485000}, {"CANH_GIOI": "Thần Tôn", "TANG": 10, "TU_VI_CAN": 9417599999999999479111367022257706631168, "HP_MAX": 253449999999999982660808666999947264, "MP_MAX": 126724999999999991330404333499973632, "ATK": 688490000000000048173864751988736, "DEF": 344245000000000024086932375994368, "MDEF": 309820500000000007266720330809344, "TOC_DO": 19915000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 1, "TU_VI_CAN": 12710000000000000305114012216541505912832, "HP_MAX": 330000000000000015474549859322691584, "MP_MAX": 165000000000000007737274929661345792, "ATK": 894999999999999942642920448851968, "DEF": 447499999999999971321460224425984, "MDEF": 402749999999999966983554798190592, "TOC_DO": 20350000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 2, "TU_VI_CAN": 17159999999999998911007633054052231675904, "HP_MAX": 429000000000000034874310076087140352, "MP_MAX": 214500000000000017437155038043570176, "ATK": 1164000000000000024271603219038208, "DEF": 582000000000000012135801609519104, "MDEF": 523799999999999967687665025810432, "TOC_DO": 20790000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 3, "TU_VI_CAN": 23170000000000000934777059411761668554752, "HP_MAX": 557999999999999968478057386163044352, "MP_MAX": 278999999999999984239028693081522176, "ATK": 1512999999999999922843471254126592, "DEF": 756499999999999961421735627063296, "MDEF": 680849999999999936456524449185792, "TOC_DO": 21235000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 4, "TU_VI_CAN": 31279999999999997981120883946138216955904, "HP_MAX": 725000000000000004929520392969650176, "MP_MAX": 362500000000000002464760196484825088, "ATK": 1966999999999999968462837903261696, "DEF": 983499999999999984231418951630848, "MDEF": 885149999999999971396758248882176, "TOC_DO": 21685000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 5, "TU_VI_CAN": 42230000000000001559732410738986566287360, "HP_MAX": 943000000000000035723016418598322176, "MP_MAX": 471500000000000017861508209299161088, "ATK": 2556999999999999861412326386171904, "DEF": 1278499999999999930706163193085952, "MDEF": 1150649999999999952047065681362944, "TOC_DO": 22140000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 6, "TU_VI_CAN": 57009999999999995473275179917412667490304, "HP_MAX": 1226000000000000040496933118551261184, "MP_MAX": 613000000000000020248466559275630592, "ATK": 3324000000000000125769188026351616, "DEF": 1662000000000000062884594013175808, "MDEF": 1495799999999999970127021766344704, "TOC_DO": 22600000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 7, "TU_VI_CAN": 76959999999999997753690566795546389905408, "HP_MAX": 1594000000000000011245246084928241664, "MP_MAX": 797000000000000005622623042464120832, "ATK": 4320999999999999737736917736751104, "DEF": 2160499999999999868868458868375552, "MDEF": 1944449999999999968450725827051520, "TOC_DO": 23065000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 8, "TU_VI_CAN": 103899999999999991030810864621837476691968, "HP_MAX": 2071999999999999937960424807853981696, "MP_MAX": 1035999999999999968980212403926990848, "ATK": 5617000000000000317450145694220288, "DEF": 2808500000000000158725072847110144, "MDEF": 2527650000000000027560415101714432, "TOC_DO": 23535000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 9, "TU_VI_CAN": 140269999999999990383947137389252139024384, "HP_MAX": 2693999999999999866061808829768663040, "MP_MAX": 1346999999999999933030904414884331520, "ATK": 7302000000000000343918864129589248, "DEF": 3651000000000000171959432064794624, "MDEF": 3285899999999999751240962245918720, "TOC_DO": 24010000}, {"CANH_GIOI": "Chuẩn Thánh", "TANG": 10, "TU_VI_CAN": 189359999999999989707628756368383029542912, "HP_MAX": 3502000000000000250973395181046333440, "MP_MAX": 1751000000000000125486697590523166720, "ATK": 9493000000000000145699072156631040, "DEF": 4746500000000000072849536078315520, "MDEF": 4271849999999999777334206318772224, "TOC_DO": 24490000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 1, "TU_VI_CAN": 255640000000000006281425124221157113856000, "HP_MAX": 4549999999999999949516878278815645696, "MP_MAX": 2274999999999999974758439139407822848, "ATK": 12340000000000000262264769111654400, "DEF": 6170000000000000131132384555827200, "MDEF": 5553000000000000118019146100244480, "TOC_DO": 24975000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 2, "TU_VI_CAN": 345110000000000013449454662559008913620992, "HP_MAX": 5915000000000000583697333157036556288, "MP_MAX": 2957500000000000291848666578518278144, "ATK": 16039999999999998965617694387208192, "DEF": 8019999999999999482808847193604096, "MDEF": 7218000000000000226280865238351872, "TOC_DO": 25465000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 3, "TU_VI_CAN": 465900000000000026931736977740731217084416, "HP_MAX": 7690000000000000463458477314597191680, "MP_MAX": 3845000000000000231729238657298595840, "ATK": 20849999999999997741145099088166912, "DEF": 10424999999999998870572549544083456, "MDEF": 9382499999999999675268197353783296, "TOC_DO": 25960000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 4, "TU_VI_CAN": 628970000000000008868837063656955155841024, "HP_MAX": 9996999999999999421904399791565045760, "MP_MAX": 4998499999999999710952199895782522880, "ATK": 27109999999999999810051989695365120, "DEF": 13554999999999999905025994847682560, "MDEF": 12199500000000001067444899969761280, "TOC_DO": 26460000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 5, "TU_VI_CAN": 849110000000000056807349510339390578098176, "HP_MAX": 12996000000000000936761767476972224512, "MP_MAX": 6498000000000000468380883738486112256, "ATK": 35239999999999998842999333023907840, "DEF": 17619999999999999421499666511953920, "MDEF": 15858000000000000632271204467605504, "TOC_DO": 26965000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 6, "TU_VI_CAN": 1146299999999999990685110764457319167164416, "HP_MAX": 16894999999999999730164795372046647296, "MP_MAX": 8447499999999999865082397686023323648, "ATK": 45810000000000001732258645900525568, "DEF": 22905000000000000866129322950262784, "MDEF": 20614499999999998934841983284281344, "TOC_DO": 27475000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 7, "TU_VI_CAN": 1547500000000000127102223448548000275628032, "HP_MAX": 21963000000000001951568044992810188800, "MP_MAX": 10981500000000000975784022496405094400, "ATK": 59550000000000000880699384247877632, "DEF": 29775000000000000440349692123938816, "MDEF": 26797499999999999935146121068806144, "TOC_DO": 27990000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 8, "TU_VI_CAN": 2089100000000000073050720948229345405566976, "HP_MAX": 28552000000000000848752410742715580416, "MP_MAX": 14276000000000000424376205371357790208, "ATK": 77419999999999996973943532761907200, "DEF": 38709999999999998486971766380953600, "MDEF": 34839000000000000944117598956552192, "TOC_DO": 28510000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 9, "TU_VI_CAN": 2820300000000000290819395927674268829089792, "HP_MAX": 37118000000000000017073722417353850880, "MP_MAX": 18559000000000000008536861208676925440, "ATK": 100649999999999998816779603506364416, "DEF": 50324999999999999408389801753182208, "MDEF": 45292500000000000389888025263341568, "TOC_DO": 29035000}, {"CANH_GIOI": "Hỗn Nguyên Thánh Nhân", "TANG": 10, "TU_VI_CAN": 3807400000000000153164371387743173131370496, "HP_MAX": 48252999999999997330607064395020238848, "MP_MAX": 24126499999999998665303532197510119424, "ATK": 130850000000000004436557058338193408, "DEF": 65425000000000002218278529169096704, "MDEF": 58882499999999995540090250453843968, "TOC_DO": 29565000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 1, "TU_VI_CAN": 5139999999999999757200498138652257128808448, "HP_MAX": 62730000000000004403894962556225191936, "MP_MAX": 31365000000000002201947481278112595968, "ATK": 170100000000000014550175861027373056, "DEF": 85050000000000007275087930513686528, "MDEF": 76545000000000002858230322720407552, "TOC_DO": 30100000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 2, "TU_VI_CAN": 6938999999999999579375169540777026506457088, "HP_MAX": 81549999999999999231409236156935569408, "MP_MAX": 40774999999999999615704618078467784704, "ATK": 221100000000000008892208879849439232, "DEF": 110550000000000004446104439924719616, "MDEF": 99494999999999996622796366448427008, "TOC_DO": 30640000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 3, "TU_VI_CAN": 9367999999999999852274878336225642268327936, "HP_MAX": 106020000000000007144912683852179177472, "MP_MAX": 53010000000000003572456341926089588736, "ATK": 287399999999999986779456545350483968, "DEF": 143699999999999993389728272675241984, "MDEF": 129329999999999992206081038036762624, "TOC_DO": 31185000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 4, "TU_VI_CAN": 12647000000000000526972329448119243049533440, "HP_MAX": 137829999999999990869556000934636552192, "MP_MAX": 68914999999999995434778000467318276096, "ATK": 373600000000000021633249064448425984, "DEF": 186800000000000010816624532224212992, "MDEF": 168119999999999994977566820034150400, "TOC_DO": 31735000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 5, "TU_VI_CAN": 17072999999999999278175102826852364316573696, "HP_MAX": 179180000000000001470707814101380235264, "MP_MAX": 89590000000000000735353907050690117632, "ATK": 485700000000000015128709931483529216, "DEF": 242850000000000007564354965741764608, "MDEF": 218565000000000003118570654425677824, "TOC_DO": 32290000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 6, "TU_VI_CAN": 23049000000000000582567934672897333117583360, "HP_MAX": 232930000000000016552857460109274513408, "MP_MAX": 116465000000000008276428730054637256704, "ATK": 631400000000000018785882207594479616, "DEF": 315700000000000009392941103797239808, "MDEF": 284129999999999986317554104966053888, "TOC_DO": 32850000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 7, "TU_VI_CAN": 31116000000000000721367544260835286741680128, "HP_MAX": 302810000000000002746907627514822131712, "MP_MAX": 151405000000000001373453813757411065856, "ATK": 820800000000000037416160722172248064, "DEF": 410400000000000018708080361086124032, "MDEF": 369360000000000002079877066009870336, "TOC_DO": 33415000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 8, "TU_VI_CAN": 42007000000000000074562597498334366767513600, "HP_MAX": 393650000000000037219042009876675952640, "MP_MAX": 196825000000000018609521004938337976320, "ATK": 1067000000000000045115246125487489024, "DEF": 533500000000000022557623062743744512, "MDEF": 480150000000000005544465497501728768, "TOC_DO": 33985000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 9, "TU_VI_CAN": 56709000000000001143302043265403331134095360, "HP_MAX": 511750000000000030083582985617828478976, "MP_MAX": 255875000000000015041791492808914239488, "ATK": 1387099999999999999620238927263170560, "DEF": 693549999999999999810119463631585280, "MDEF": 624194999999999999829107517268426752, "TOC_DO": 34560000}, {"CANH_GIOI": "Hỗn Độn Đạo Tổ", "TANG": 10, "TU_VI_CAN": 76556999999999999002478512289957834265722880, "HP_MAX": 665279999999999998140127136307029737472, "MP_MAX": 332639999999999999070063568153514868736, "ATK": 1803199999999999856666733535247204352, "DEF": 901599999999999928333366767623602176, "MDEF": 811440000000000038801796903634731008, "TOC_DO": 35140000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 1, "TU_VI_CAN": 103349999999999990379416577760671958292234240, "HP_MAX": 864859999999999981999957088610889498624, "MP_MAX": 432429999999999990999978544305444749312, "ATK": 2344199999999999876222097445028364288, "DEF": 1172099999999999938111048722514182144, "MDEF": 1054889999999999988572129627165687808, "TOC_DO": 35725000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 2, "TU_VI_CAN": 139519999999999994180159849419840426904387584, "HP_MAX": 1124320000000000059948912035402604347392, "MP_MAX": 562160000000000029974456017701302173696, "ATK": 3047500000000000255821556742967263232, "DEF": 1523750000000000127910778371483631616, "MDEF": 1371375000000000144634491052270551040, "TOC_DO": 36315000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 3, "TU_VI_CAN": 188349999999999985993349395131480563857227776, "HP_MAX": 1461619999999999927288493637600123289600, "MP_MAX": 730809999999999963644246818800061644800, "ATK": 3961799999999999901632067142982565888, "DEF": 1980899999999999950816033571491282944, "MDEF": 1782810000000000073793592286083284992, "TOC_DO": 36910000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 4, "TU_VI_CAN": 254269999999999980336152901443998285062733824, "HP_MAX": 1900110000000000102396122859662785642496, "MP_MAX": 950055000000000051198061429831392821248, "ATK": 5150299999999999957140296026346749952, "DEF": 2575149999999999978570148013173374976, "MDEF": 2317634999999999862653971140114907136, "TOC_DO": 37510000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 5, "TU_VI_CAN": 343259999999999984375407799090069154773860352, "HP_MAX": 2470139999999999962756789751700355284992, "MP_MAX": 1235069999999999981378394875850177642496, "ATK": 6695399999999999421276293844233617408, "DEF": 3347699999999999710638146922116808704, "MDEF": 3012929999999999857633494301646258176, "TOC_DO": 38115000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 6, "TU_VI_CAN": 463400000000000005542428270828067950291845120, "HP_MAX": 3211180000000000110020022779927848812544, "MP_MAX": 1605590000000000055010011389963924406272, "ATK": 8703999999999999821434715690573496320, "DEF": 4351999999999999910717357845286748160, "MDEF": 3916799999999999919645622060758073344, "TOC_DO": 38725000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 7, "TU_VI_CAN": 625589999999999967868196908485722936122015744, "HP_MAX": 4174529999999999855435512012026389987328, "MP_MAX": 2087264999999999927717756006013194993664, "ATK": 11315200000000000948456751115156848640, "DEF": 5657600000000000474228375557578424320, "MDEF": 5091839999999999836509727643114930176, "TOC_DO": 39340000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 8, "TU_VI_CAN": 844549999999999974316796249228137525011283968, "HP_MAX": 5426890000000000171083677174578689343488, "MP_MAX": 2713445000000000085541838587289344671744, "ATK": 14709800000000001029916005637493358592, "DEF": 7354900000000000514958002818746679296, "MDEF": 6619409999999999755107230106425229312, "TOC_DO": 39960000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 9, "TU_VI_CAN": 1140139999999999968534214280187702062297907200, "HP_MAX": 7054959999999999848750331466230433579008, "MP_MAX": 3527479999999999924375165733115216789504, "ATK": 19122700000000001069731929853987389440, "DEF": 9561350000000000534865964926993694720, "MDEF": 8605214999999999891083558075588673536, "TOC_DO": 40585000}, {"CANH_GIOI": "Hồng Mông Chí Tôn", "TANG": 10, "TU_VI_CAN": 1539190000000000113110335319004899657906126848, "HP_MAX": 9171450000000000400517872062525410902016, "MP_MAX": 4585725000000000200258936031262705451008, "ATK": 24859500000000000851125141154530590720, "DEF": 1242975000000000042556257057726529536, "MDEF": 1118677500000000067815421869889159168, "TOC_DO": 41215000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 1, "TU_VI_CAN": 2077900000000000088146045461230686601297788928, "HP_MAX": 11922879999999999269602294713144250990592, "MP_MAX": 59614400000000003601566391253496303190016, "ATK": 323173000000000014783690590878940790784, "DEF": 161586500000000007391845295439470395392, "MDEF": 145427850000000002874767579599807184896, "TOC_DO": 41850000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 2, "TU_VI_CAN": 2805170000000000080892817679496259067269087232, "HP_MAX": 15499740000000000999405231812271686025216, "MP_MAX": 77498700000000002579174519832100080713728, "ATK": 420124999999999997696572492342175465472, "DEF": 210062499999999998848286246171087732736, "MDEF": 189056250000000006519243994145411301376, "TOC_DO": 42490000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 3, "TU_VI_CAN": 3786980000000000270189447527673255150936391680, "HP_MAX": 20149660000000000460299196276601509642240, "MP_MAX": 10074830000000000230149598138300754821120, "ATK": 546162999999999995175427077322643079168, "DEF": 273081499999999997587713538661321539584, "MDEF": 245773349999999990273155812203757043712, "TOC_DO": 43135000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 4, "TU_VI_CAN": 5112419999999999779146072268707882442036346880, "HP_MAX": 26194559999999999261250084932601130254336, "MP_MAX": 13097279999999999630625042466300565127168, "ATK": 710011999999999957094257179536123756544, "DEF": 355005999999999978547128589768061878272, "MDEF": 319505399999999995803988475974120374272, "TOC_DO": 43785000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 5, "TU_VI_CAN": 6901770000000000445913204484935328495564750848, "HP_MAX": 34052929999999999153197223722955646697472, "MP_MAX": 17026464999999999576598611861477823348736, "ATK": 923015999999999979026215191658088103936, "DEF": 461507999999999989513107595829044051968, "MDEF": 415357200000000013229155954020436672512, "TOC_DO": 44440000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 6, "TU_VI_CAN": 9317389999999999764692122035285345200481763328, "HP_MAX": 44268810000000003549860562030720293273600, "MP_MAX": 22134405000000001774930281015360146636800, "ATK": 1199920999999999975024347433103213461504, "DEF": 599960499999999987512173716551606730752, "MDEF": 539964450000000003872529090079310741504, "TOC_DO": 45100000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 7, "TU_VI_CAN": 12578479999999999272197017593380204576759611392, "HP_MAX": 57549450000000001784823757521890930851840, "MP_MAX": 28774725000000000892411878760945465425920, "ATK": 1559897000000000047209900235618384871424, "DEF": 779948500000000023604950117809192435712, "MDEF": 701953650000000036356027851211137875968, "TOC_DO": 45765000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 8, "TU_VI_CAN": 16980949999999999471254958358242087594612490240, "HP_MAX": 74814290000000003813126987669522828230656, "MP_MAX": 37407145000000001906563493834761414115328, "ATK": 2027865999999999977114086365824295108608, "DEF": 1013932999999999988557043182912147554304, "MDEF": 912539700000000019924484354986662166528, "TOC_DO": 46435000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 9, "TU_VI_CAN": 22924279999999999352783263138768004731094695936, "HP_MAX": 97258580000000001984216122938205088514048, "MP_MAX": 48629290000000000992108061469102544257024, "ATK": 2636226000000000078319589175799335354368, "DEF": 1318113000000000039159794587899667677184, "MDEF": 1186301700000000065466960619475430277120, "TOC_DO": 47110000}, {"CANH_GIOI": "Siêu Thoát Vô Thượng", "TANG": 10, "TU_VI_CAN": 30947779999999999072986149753223857204283572224, "HP_MAX": 12643615000000001202374329011555165798400, "MP_MAX": 63218075000000003594020005828517479579648, "ATK": 3427094000000000209886742828766887673856, "DEF": 1713547000000000104943371414383443836928, "MDEF": 1542192299999999852663870350019264512000, "TOC_DO": 47790000}], "maps": [{"ID": 1, "VI_DIEN": "Phàm Nhân Giới", "KHU_VUC": "Thanh Phong Lĩnh", "TEN_DIA_DIEM": "Tân Thủ Thôn", "TOA_DO_X": 0, "TOA_DO_Y": 0, "LOAI_HINH": "Khu An Toàn / Trị Liệu", "CANH_GIOI_YEU_CAU": "Luyện Tinh Hóa Khí", "MO_TA": "Ngôi làng bình dị, hồi phục toàn bộ HP/MP, nhận chỉ dẫn sơ khởi.", "BUFF_HIEU_UNG": "HOI_PHUC_HP_MP"}, {"ID": 2, "VI_DIEN": "Phàm Nhân Giới", "KHU_VUC": "Thanh Phong Lĩnh", "TEN_DIA_DIEM": "Hắc Phong Sâm Lâm", "TOA_DO_X": 20, "TOA_DO_Y": 15, "LOAI_HINH": "Săn Quái / Thu Thập", "CANH_GIOI_YEU_CAU": "Luyện Khí", "MO_TA": "Rừng rậm chướng khí, nơi săn dã thú biến dị và hái linh thảo sơ cấp.", "BUFF_HIEU_UNG": "DROP_THAO_DUOC_QUANG"}, {"ID": 3, "VI_DIEN": "Phàm Nhân Giới", "KHU_VUC": "Thanh Lam Sơn", "TEN_DIA_DIEM": "Linh Tuyền Động", "TOA_DO_X": -15, "TOA_DO_Y": 30, "LOAI_HINH": "Động Phủ Bế Quan", "CANH_GIOI_YEU_CAU": "Luyện Khí", "MO_TA": "Mạch linh tuyền tinh thuần ngàn năm, gia tăng 50% tốc độ tu vi AFK.", "BUFF_HIEU_UNG": "TU_VI_EXP_+50%"}, {"ID": 4, "VI_DIEN": "Phàm Nhân Giới", "KHU_VUC": "Trung Châu Hoàng Triều", "TEN_DIA_DIEM": "Thiên Khôi Thành", "TOA_DO_X": -40, "TOA_DO_Y": -30, "LOAI_HINH": "Đại Đô Thị / Giao Dịch", "CANH_GIOI_YEU_CAU": "Luyện Khí", "MO_TA": "Kinh đô sầm uất quy tụ Vạn Bảo Các, Đan Các, mua bán trao đổi vật phẩm.", "BUFF_HIEU_UNG": "MUA_BAN_GIAO_DICH"}, {"ID": 5, "VI_DIEN": "Phàm Nhân Giới", "KHU_VUC": "Thông Thiên Phong", "TEN_DIA_DIEM": "Phi Thăng Đài", "TOA_DO_X": 0, "TOA_DO_Y": 100, "LOAI_HINH": "Độ Kiếp / Vượt Cấp", "CANH_GIOI_YEU_CAU": "Độ Kiếp", "MO_TA": "Đỉnh cao phong ấn kết giới Tiên Phàm, nơi nghênh tiếp Cửu Trọng Thiên Lôi phi thăng.", "BUFF_HIEU_UNG": "KHU_VUC_PHI_THANG"}, {"ID": 6, "VI_DIEN": "Thượng Tiên Giới", "KHU_VUC": "Nam Thiên Cực", "TEN_DIA_DIEM": "Tiếp Dẫn Tiên Điện", "TOA_DO_X": 0, "TOA_DO_Y": 0, "LOAI_HINH": "Khu An Toàn / Hóa Phàm", "CANH_GIOI_YEU_CAU": "Nhân Tiên", "MO_TA": "Nơi tiên nhân mới phi thăng tẩy tủy đúc Tiên Thể, hồi phục trạng thái.", "BUFF_HIEU_UNG": "HOI_PHUC_HP_MP"}, {"ID": 7, "VI_DIEN": "Thượng Tiên Giới", "KHU_VUC": "Bách Thú Tiên Vực", "TEN_DIA_DIEM": "Vạn Tiên Lạc Viên", "TOA_DO_X": 30, "TOA_DO_Y": 25, "LOAI_HINH": "Săn Quái / Tiên Thảo", "CANH_GIOI_YEU_CAU": "Chân Tiên", "MO_TA": "Khu vườn cổ xưa nơi tiên thú sinh sống, thu thập Tiên Chi, Thần Thạch.", "BUFF_HIEU_UNG": "DROP_TIEN_DUOC"}, {"ID": 8, "VI_DIEN": "Thượng Tiên Giới", "KHU_VUC": "Cửu Trọng Thiên Đình", "TEN_DIA_DIEM": "Cực Lạc Linh Trì", "TOA_DO_X": -25, "TOA_DO_Y": 40, "LOAI_HINH": "Động Phủ Bế Quan", "CANH_GIOI_YEU_CAU": "Huyền Tiên", "MO_TA": "Linh trì ngập tràn Tiên Khí thuần khiết, gia tăng 100% tốc độ tu vi AFK.", "BUFF_HIEU_UNG": "TU_VI_EXP_+100%"}, {"ID": 9, "VI_DIEN": "Thượng Tiên Giới", "KHU_VUC": "Thái Hư Hư Không", "TEN_DIA_DIEM": "Thái Hư Tiên Thị", "TOA_DO_X": -50, "TOA_DO_Y": -40, "LOAI_HINH": "Tiên Thị Giao Dịch", "CANH_GIOI_YEU_CAU": "Nhân Tiên", "MO_TA": "Phường thị lơ lửng giữa mây trời, trao đổi Tiên Tinh, Tiên Đan phương và Thần Khí.", "BUFF_HIEU_UNG": "MUA_BAN_TIEN_GIOI"}, {"ID": 10, "VI_DIEN": "Thượng Tiên Giới", "KHU_VUC": "Bắc Cực Tinh Môn", "TEN_DIA_DIEM": "Thông Thiên Tinh Môn", "TOA_DO_X": 0, "TOA_DO_Y": 150, "LOAI_HINH": "Cổng Phi Thăng Thần Giới", "CANH_GIOI_YEU_CAU": "Hỗn Độn Tiên Tôn", "MO_TA": "Cửa ngõ không gian nối liền Tiên - Thần, ngưng tụ Thần Cách để phá giới.", "BUFF_HIEU_UNG": "PHI_THANG_THAN_GIOI"}, {"ID": 11, "VI_DIEN": "Hỗn Độn Thần Giới", "KHU_VUC": "Thần Vực Trung Tâm", "TEN_DIA_DIEM": "Thần Vực Cổ Thành", "TOA_DO_X": 0, "TOA_DO_Y": 0, "LOAI_HINH": "Khu An Toàn Thần Tộc", "CANH_GIOI_YEU_CAU": "Thần Nhân", "MO_TA": "Thần thành thời thái cổ bất diệt, nơi hội tụ và trị thương của các vị Thần.", "BUFF_HIEU_UNG": "HOI_PHUC_HP_MP"}, {"ID": 12, "VI_DIEN": "Hỗn Độn Thần Giới", "KHU_VUC": "Hư Không Loạn Lưu", "TEN_DIA_DIEM": "Cổ Thần Tinh Vực", "TOA_DO_X": 40, "TOA_DO_Y": 35, "LOAI_HINH": "Săn Cổ Thần Thú", "CANH_GIOI_YEU_CAU": "Thiên Thần", "MO_TA": "Quần thể tinh cầu vỡ nát, săn bắt Cổ Thần Cự Thú và nhặt Hỗn Độn Thạch.", "BUFF_HIEU_UNG": "DROP_HON_DON_KHI"}, {"ID": 13, "VI_DIEN": "Hỗn Độn Thần Giới", "KHU_VUC": "Thái Sơ Mạch", "TEN_DIA_DIEM": "Tinh Hạch Cấm Địa", "TOA_DO_X": -30, "TOA_DO_Y": 50, "LOAI_HINH": "Động Phủ Tinh Hạch", "CANH_GIOI_YEU_CAU": "Thần Vương", "MO_TA": "Lõi tinh cầu tỏa ra Thần Lực dồi dào, gia tăng 200% tốc độ tu vi AFK.", "BUFF_HIEU_UNG": "TU_VI_EXP_+200%"}, {"ID": 14, "VI_DIEN": "Hỗn Độn Thần Giới", "KHU_VUC": "Thần Ma Biên Cảnh", "TEN_DIA_DIEM": "Thần Ma Thương Phường", "TOA_DO_X": -60, "TOA_DO_Y": -50, "LOAI_HINH": "Giao Dịch Thần Đan", "CANH_GIOI_YEU_CAU": "Thần Nhân", "MO_TA": "Nơi Thần Ma giao tranh và trao đổi Thần Vật, Pháp Tắc Tàn Phiến.", "BUFF_HIEU_UNG": "MUA_BAN_THAN_GIOI"}, {"ID": 15, "VI_DIEN": "Hỗn Độn Thần Giới", "KHU_VUC": "Chung Cực Hư Vô", "TEN_DIA_DIEM": "Quy Tắc Chi Uyên", "TOA_DO_X": 0, "TOA_DO_Y": 200, "LOAI_HINH": "Chứng Đạo Thánh Nhân", "CANH_GIOI_YEU_CAU": "Thần Tôn", "MO_TA": "Vực sâu bản nguyên quy tắc vũ trụ, nơi ngưng tụ Đạo Quả nhập Thánh.", "BUFF_HIEU_UNG": "PHI_THANG_THANH_GIOI"}, {"ID": 16, "VI_DIEN": "Hồng Mông Thánh Giới", "KHU_VUC": "Bản Nguyên Chi Địa", "TEN_DIA_DIEM": "Hỗn Nguyên Đạo Quán", "TOA_DO_X": 0, "TOA_DO_Y": 0, "LOAI_HINH": "Khu Tịnh Tâm Thánh Địa", "CANH_GIOI_YEU_CAU": "Chuẩn Thánh", "MO_TA": "Đạo quán nằm ngoài dòng chảy thời gian, bất tử bất diệt, tĩnh dưỡng bản thể.", "BUFF_HIEU_UNG": "HOI_PHUC_HP_MP"}, {"ID": 17, "VI_DIEN": "Hồng Mông Thánh Giới", "KHU_VUC": "Thời Không Liệt Phùng", "TEN_DIA_DIEM": "Vết Nứt Hư Không", "TOA_DO_X": 50, "TOA_DO_Y": 45, "LOAI_HINH": "Trảm Hư Vô Ma Thần", "CANH_GIOI_YEU_CAU": "Hỗn Nguyên Thánh Nhân", "MO_TA": "Khe nứt hỗn mang vô tận, săn giết Ngoại Vực Ma Thần thu thập Khí Hồng Mông.", "BUFF_HIEU_UNG": "DROP_HONG_MONG_BAO"}, {"ID": 18, "VI_DIEN": "Hồng Mông Thánh Giới", "KHU_VUC": "Vô Thượng Thiên", "TEN_DIA_DIEM": "Hồng Mông Bản Nguyên Khí", "TOA_DO_X": -40, "TOA_DO_Y": 60, "LOAI_HINH": "Động Phủ Khởi Nguyên", "CANH_GIOI_YEU_CAU": "Hỗn Độn Đạo Tổ", "MO_TA": "Biển khí sơ khai của vũ trụ, gia tăng 300% tốc độ ngưng tụ đại đạo AFK.", "BUFF_HIEU_UNG": "TU_VI_EXP_+300%"}, {"ID": 19, "VI_DIEN": "Hồng Mông Thánh Giới", "KHU_VUC": "Vạn Giới Chi Đỉnh", "TEN_DIA_DIEM": "Vô Thượng Đạo Đài", "TOA_DO_X": -70, "TOA_DO_Y": -60, "LOAI_HINH": "Thương Lĩnh Đại Đạo", "CANH_GIOI_YEU_CAU": "Chuẩn Thánh", "MO_TA": "Nơi trao đổi Cực Phẩm Hỗn Độn Linh Bảo, Tàn Cảnh Khởi Nguyên.", "BUFF_HIEU_UNG": "MUA_BAN_THANH_GIOI"}, {"ID": 20, "VI_DIEN": "Hồng Mông Thánh Giới", "KHU_VUC": "Vô Tận Luân Hồi", "TEN_DIA_DIEM": "Luân Hồi Chi Môn", "TOA_DO_X": 0, "TOA_DO_Y": 300, "LOAI_HINH": "Siêu Thoát / Trùng Sinh", "CANH_GIOI_YEU_CAU": "Siêu Thoát Vô Thượng", "MO_TA": "Cánh cổng bước vào Luân Hồi vĩnh hằng, mở ra kiếp tu tiên mới với tư chất nghịch thiên.", "BUFF_HIEU_UNG": "TRUNG_SINH_LUAN_HOI"}], "spawns": [{"TEN_DIA_DIEM": "Tân Thủ Thôn", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_HERB_01", "TEN_HIEN_THI": "Bụi Cỏ Cầm Máu", "TY_LE_GAP": 80, "YEU_CAU_CANH_GIOI": "Luyện Tinh Hóa Khí"}, {"TEN_DIA_DIEM": "Tân Thủ Thôn", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_WATER_01", "TEN_HIEN_THI": "Suối Nước Thanh Lọc", "TY_LE_GAP": 60, "YEU_CAU_CANH_GIOI": "Luyện Tinh Hóa Khí"}, {"TEN_DIA_DIEM": "Hắc Phong Sâm Lâm", "LOAI_SPAWN": "QUAI_THUONG", "MA_SPAWN": "MON_WOLF_01", "TEN_HIEN_THI": "Hắc Phong Lang", "TY_LE_GAP": 70, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Hắc Phong Sâm Lâm", "LOAI_SPAWN": "BOSS", "MA_SPAWN": "BOSS_WOLF_KING", "TEN_HIEN_THI": "Hắc Phong Lang Vương", "TY_LE_GAP": 15, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Hắc Phong Sâm Lâm", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_HERB_02", "TEN_HIEN_THI": "Bãi Hắc Linh Thảo", "TY_LE_GAP": 65, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Hắc Phong Sâm Lâm", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_ORE_01", "TEN_HIEN_THI": "Vỉa Quặng Huyền Thiết", "TY_LE_GAP": 45, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Linh Tuyền Động", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_SPRING_01", "TEN_HIEN_THI": "Mạch Linh Tuyền Tinh Khiết", "TY_LE_GAP": 90, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Linh Tuyền Động", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_STONE_01", "TEN_HIEN_THI": "Vách Đá Linh Thạch Vụn", "TY_LE_GAP": 35, "YEU_CAU_CANH_GIOI": "Luyện Khí"}, {"TEN_DIA_DIEM": "Vạn Tiên Lạc Viên", "LOAI_SPAWN": "QUAI_THUONG", "MA_SPAWN": "MON_BEAST_TIEN", "TEN_HIEN_THI": "Cửu Vĩ Linh Hồ", "TY_LE_GAP": 60, "YEU_CAU_CANH_GIOI": "Nhân Tiên"}, {"TEN_DIA_DIEM": "Vạn Tiên Lạc Viên", "LOAI_SPAWN": "BOSS", "MA_SPAWN": "BOSS_TIEN_LONG", "TEN_HIEN_THI": "Thanh Long Thượng Cổ", "TY_LE_GAP": 10, "YEU_CAU_CANH_GIOI": "Chân Tiên"}, {"TEN_DIA_DIEM": "Vạn Tiên Lạc Viên", "LOAI_SPAWN": "TAI_NGUYEN", "MA_SPAWN": "RES_HERB_TIEN", "TEN_HIEN_THI": "Cực Phẩm Tiên Chi Thảo", "TY_LE_GAP": 50, "YEU_CAU_CANH_GIOI": "Nhân Tiên"}, {"TEN_DIA_DIEM": "Cổ Thần Tinh Vực", "LOAI_SPAWN": "QUAI_THUONG", "MA_SPAWN": "MON_GOD_BEAST", "TEN_HIEN_THI": "Tinh Không Cự Thú", "TY_LE_GAP": 50, "YEU_CAU_CANH_GIOI": "Thần Nhân"}, {"TEN_DIA_DIEM": "Cổ Thần Tinh Vực", "LOAI_SPAWN": "BOSS", "MA_SPAWN": "BOSS_GOD_KING", "TEN_HIEN_THI": "Cổ Thần Tàn Hồn", "TY_LE_GAP": 8, "YEU_CAU_CANH_GIOI": "Thần Vương"}, {"TEN_DIA_DIEM": "Vết Nứt Hư Không", "LOAI_SPAWN": "BOSS", "MA_SPAWN": "BOSS_CHAOS_LORD", "TEN_HIEN_THI": "Hư Vô Ma Thần", "TY_LE_GAP": 5, "YEU_CAU_CANH_GIOI": "Hỗn Nguyên Thánh Nhân"}], "drops": [{"MA_SPAWN": "MON_WOLF_01", "TEN_VAT_PHAM": "Lang Bì Thô", "PHAM_CAP": "Phàm Phẩm", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 85, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 3, "CONG_DUNG": "Dùng may mặc hộ giáp sơ cấp"}, {"MA_SPAWN": "MON_WOLF_01", "TEN_VAT_PHAM": "Lang Nha Tiết", "PHAM_CAP": "Phàm Phẩm", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 60, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 2, "CONG_DUNG": "Dùng rèn vũ khí thô"}, {"MA_SPAWN": "MON_WOLF_01", "TEN_VAT_PHAM": "Yêu Đan Hạ Phẩm", "PHAM_CAP": "Phàm Phẩm", "LOAI_DO": "DanDuoc", "TY_LE_DROP": 25, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Hấp thu tăng 100 Tu Vi"}, {"MA_SPAWN": "BOSS_WOLF_KING", "TEN_VAT_PHAM": "Lang Vương Tinh Huyết", "PHAM_CAP": "Hoàng Giai", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 100, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 2, "CONG_DUNG": "Đan dẫn luyện Trúc Cơ Đan"}, {"MA_SPAWN": "BOSS_WOLF_KING", "TEN_VAT_PHAM": "Lang Vương Hộ Oản", "PHAM_CAP": "Hoàng Giai", "LOAI_DO": "TrangBi", "TY_LE_DROP": 30, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Bao tay: +15 ATK, +5 DEF"}, {"MA_SPAWN": "BOSS_WOLF_KING", "TEN_VAT_PHAM": "Tật Phong Bộ Pháp", "PHAM_CAP": "Hoàng Giai", "LOAI_DO": "BiKip", "TY_LE_DROP": 15, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Học thân pháp tăng 10 Tốc độ"}, {"MA_SPAWN": "RES_HERB_02", "TEN_VAT_PHAM": "Hắc Linh Thảo", "PHAM_CAP": "Phàm Phẩm", "LOAI_DO": "DuocLieu", "TY_LE_DROP": 80, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 4, "CONG_DUNG": "Thảo dược luyện Tụ Khí Đan"}, {"MA_SPAWN": "RES_HERB_02", "TEN_VAT_PHAM": "Thảo Căn Ngàn Năm", "PHAM_CAP": "Hoàng Giai", "LOAI_DO": "DuocLieu", "TY_LE_DROP": 10, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Dược liệu hiếm tăng phẩm đan"}, {"MA_SPAWN": "RES_ORE_01", "TEN_VAT_PHAM": "Huyền Thiết Quặng", "PHAM_CAP": "Phàm Phẩm", "LOAI_DO": "KhoangThach", "TY_LE_DROP": 70, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 3, "CONG_DUNG": "Đúc kiếm phàm giai"}, {"MA_SPAWN": "RES_ORE_01", "TEN_VAT_PHAM": "Tinh Cương Khối", "PHAM_CAP": "Hoàng Giai", "LOAI_DO": "KhoangThach", "TY_LE_DROP": 20, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Phôi rèn pháp bảo sơ cấp"}, {"MA_SPAWN": "MON_BEAST_TIEN", "TEN_VAT_PHAM": "Tiên Hồ Linh Mao", "PHAM_CAP": "Tiên Giai", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 75, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 2, "CONG_DUNG": "May Tiên Bào"}, {"MA_SPAWN": "MON_BEAST_TIEN", "TEN_VAT_PHAM": "Tiên Thú Nội Đan", "PHAM_CAP": "Tiên Giai", "LOAI_DO": "DanDuoc", "TY_LE_DROP": 35, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Tăng 50,000 Tu Vi"}, {"MA_SPAWN": "BOSS_TIEN_LONG", "TEN_VAT_PHAM": "Chân Long Chi Lân", "PHAM_CAP": "Tiên Giai", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 100, "SO_LUONG_MIN": 2, "SO_LUONG_MAX": 5, "CONG_DUNG": "Đúc Long Lân Chiến Giáp"}, {"MA_SPAWN": "BOSS_TIEN_LONG", "TEN_VAT_PHAM": "Long Hồn Tiên Kiếm", "PHAM_CAP": "Tiên Giai", "LOAI_DO": "TrangBi", "TY_LE_DROP": 20, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Kiếm Tiên: +500 ATK, +10% Crit"}, {"MA_SPAWN": "BOSS_CHAOS_LORD", "TEN_VAT_PHAM": "Khí Hồng Mông", "PHAM_CAP": "Hồng Mông", "LOAI_DO": "NguyenLieu", "TY_LE_DROP": 100, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Nguyên liệu đột phá Đạo Tổ"}, {"MA_SPAWN": "BOSS_CHAOS_LORD", "TEN_VAT_PHAM": "Hư Vô Thần Kích", "PHAM_CAP": "Hồng Mông", "LOAI_DO": "TrangBi", "TY_LE_DROP": 5, "SO_LUONG_MIN": 1, "SO_LUONG_MAX": 1, "CONG_DUNG": "Thần Binh: +10,000 ATK"}], "recipes": [{"ID": 1, "LOAI": "Luyện Đan", "TEN_THANH_PHAM": "Tụ Khí Đan", "NGUYEN_LIEU_YEU_CAU": "Hắc Linh Thảo x2, Yêu Đan (Luyện Khí) x1, Linh Thạch Vụn x5", "TY_LE_TC": 0.9, "CONG_DUNG": "Tăng 150 điểm Tu vi lập tức"}, {"ID": 2, "LOAI": "Luyện Đan", "TEN_THANH_PHAM": "Trúc Cơ Đan", "NGUYEN_LIEU_YEU_CAU": "Hắc Linh Thảo x5, Trư Bì x2, Hổ Nha x1, Linh Thạch Vụn x20", "TY_LE_TC": 0.7, "CONG_DUNG": "Tăng 30% tỷ lệ đột phá Trúc Cơ"}, {"ID": 3, "LOAI": "Luyện Khí", "TEN_THANH_PHAM": "Hộ Thân Phù", "NGUYEN_LIEU_YEU_CAU": "Trư Bì x2, Linh Thạch Vụn x10", "TY_LE_TC": 0.85, "CONG_DUNG": "Trang bị: Giảm sát thương +5%, DEF+10"}, {"ID": 4, "LOAI": "Luyện Khí", "TEN_THANH_PHAM": "Bạch Hổ Nhẫn", "NGUYEN_LIEU_YEU_CAU": "Hổ Nha x2, Linh Thạch Vụn x15", "TY_LE_TC": 0.8, "CONG_DUNG": "Trang bị: ATK+15, CRIT+5%"}, {"ID": 5, "LOAI": "Luyện Đan", "TEN_THANH_PHAM": "Huyết Sâm Đan", "NGUYEN_LIEU_YEU_CAU": "Thiên Niên Huyết Sâm x1, Hắc Linh Thảo x2, Linh Thạch Vụn x10", "TY_LE_TC": 0.8, "CONG_DUNG": "Tăng 500 điểm Tu vi lập tức và hồi phục hoàn toàn HP/MP"}], "skills": [{"ID": 1, "TEN_SKILL": "Phá Không Quyền", "LOAI": "VatLy", "HE_SO_DMG": 120, "MP_TIEU_HAO": 10, "HIEU_UNG": "STUN_20", "CAP_DO": 1, "EXP_THUAN_THUC": 30, "EXP_MAX": 100, "DUNG_CHO": "NguoiChoi"}, {"ID": 2, "TEN_SKILL": "Thanh Hỏa Thuật", "LOAI": "PhapThuat", "HE_SO_DMG": 150, "MP_TIEU_HAO": 25, "HIEU_UNG": "BURN_5", "CAP_DO": 1, "EXP_THUAN_THUC": 10, "EXP_MAX": 100, "DUNG_CHO": "NguoiChoi"}, {"ID": 3, "TEN_SKILL": "Hộ Thể Cương Khí", "LOAI": "Buff", "HE_SO_DMG": 0, "MP_TIEU_HAO": 20, "HIEU_UNG": "BUFF_DEF_30", "CAP_DO": 1, "EXP_THUAN_THUC": 20, "EXP_MAX": 100, "DUNG_CHO": "NguoiChoi"}, {"ID": 4, "TEN_SKILL": "Trảm Thiết Kiếm", "LOAI": "VatLy", "HE_SO_DMG": 180, "MP_TIEU_HAO": 35, "HIEU_UNG": "CRIT_15", "CAP_DO": 1, "EXP_THUAN_THUC": 20, "EXP_MAX": 100, "DUNG_CHO": "NguoiChoi"}, {"ID": 5, "TEN_SKILL": "Hống Sơn Lôi", "LOAI": "VatLy", "HE_SO_DMG": 130, "MP_TIEU_HAO": 0, "HIEU_UNG": "DEBUFF_DEF_20", "CAP_DO": 1, "EXP_THUAN_THUC": 0, "EXP_MAX": 0, "DUNG_CHO": "Boss"}]};
+
+    // QUẢN LÝ TIẾN ĐỘ CHƠI CỦA SẾP (IN-MEMORY + LOCALSTORAGE)
+    let GAME_DATA = null;
+    let ACTIVE_COMBAT = null;
+    let CURRENT_SELECTED_SLOT_ID = null;
+
+    // KHỞI ĐỘNG ENGINE TRÒ CHƠI
+    function initH5Engine() {
+      // 1. Kiểm tra savegame trong máy của Sếp
+      let localSave = localStorage.getItem("DAIDAO_TUTIEN_SAVE_V1");
+      if (localSave) {
+        try {
+          GAME_DATA = JSON.parse(localSave);
+        } catch (e) {
+          console.error("Lỗi đọc save, dùng fallback");
+        }
+      }
+
+      // 2. Nếu chưa có save, nạp dữ liệu gốc từ Sheet/Excel
+      if (!GAME_DATA || !GAME_DATA.state) {
+        GAME_DATA = JSON.parse(JSON.stringify(EMBEDDED_DATABASE));
+        saveLocalGame();
+      }
+
+      // 3. Tính toán AFK offline ngay khi mở game
+      processOfflineAfk();
+
+      // 4. Render toàn bộ UI
+      refreshFullUI();
+
+      // 5. Vòng lặp tick AFK tự động mỗi phút
+      setInterval(() => {
+        tickCultivation(1);
+        refreshFullUI();
+      }, 60000);
+
+      // 6. Thử đồng bộ ngầm phiên bản mới nhất từ Sheet (nếu có mạng)
+      syncWithGoogleSheet(true);
+    }
+
+    // TÍNH TOÁN AFK OFFLINE KHI MỞ MÁY
+    function processOfflineAfk() {
+      const s = GAME_DATA.state;
+      const lastTimeStr = s.THOI_GIAN_CAP_NHAT_CUOI || s.THOI_GIAN_BAT_DAU_TU;
+      if (!lastTimeStr) return;
+
+      const lastTime = new Date(lastTimeStr).getTime();
+      const now = new Date().getTime();
+      if (isNaN(lastTime) || now <= lastTime) return;
+
+      const elapsedMinutes = Math.floor((now - lastTime) / (1000 * 60));
+      if (elapsedMinutes > 0) {
+        const afkSpeed = calculateAfkSpeedPerMin();
+        const gainedTuVi = elapsedMinutes * afkSpeed;
+        s.TU_VI = (Number(s.TU_VI) || 0) + gainedTuVi;
+        s.THOI_GIAN_CAP_NHAT_CUOI = new Date().toISOString();
+        saveLocalGame();
+
+        showNotice(`🧘‍♂️ Đạo hữu vừa rời mạng ${elapsedMinutes} phút.<br>Đã tự động thu nạp <b style="color:var(--gold-bright);">+${gainedTuVi.toLocaleString()}</b> Tu Vi!`);
+      }
+    }
+
+    function tickCultivation(minutes) {
+      const s = GAME_DATA.state;
+      const spd = calculateAfkSpeedPerMin();
+      s.TU_VI = (Number(s.TU_VI) || 0) + (spd * minutes);
+      s.THOI_GIAN_CAP_NHAT_CUOI = new Date().toISOString();
+      saveLocalGame();
+    }
+
+    function calculateAfkSpeedPerMin() {
+      const s = GAME_DATA.state;
+      const isCultivating = s.TRANG_THAI_TU_LUYEN === "DANG_TU_LUYEN";
+      const maxTuVi = Number(s.TU_VI_MAX) || 1000;
+      
+      const loc = (s.VI_TRI_CHI_TIET || "").toLowerCase();
+      let locMult = 1.0;
+      if (loc.includes("linh tuyền") || loc.includes("động phủ") || loc.includes("mạch")) locMult = 1.5;
+      else if (loc.includes("thôn") || loc.includes("phàm")) locMult = 0.8;
+
+      let itemMult = 1.0;
+      (GAME_DATA.inventory || []).forEach(it => {
+        if ((it.name || "").includes("Tụ Linh") || (it.effect || "").includes("tăng tốc")) itemMult += 0.2;
+      });
+
+      const lanTrungSinh = Number(s.LAN_TRUNG_SINH) || 0;
+      const tsMult = 1 + (lanTrungSinh * 0.2);
+
+      const baseRate = isCultivating ? 0.0015 : 0.0003;
+      return Math.max(1, Math.floor(maxTuVi * baseRate * locMult * itemMult * tsMult));
+    }
+
+    // ĐỒNG BỘ 1 CHẠM TỪ GOOGLE SHEET (NẠP NHẸ <0.5S)
+    function syncWithGoogleSheet(silent = false) {
+      const cloudEl = document.getElementById("ui-cloud-status");
+      if (cloudEl) cloudEl.innerText = "☁️ Đang đồng bộ...";
+
+      fetch(SYNC_URL)
+        .then(res => res.json())
+        .then(remote => {
+          if (!remote) return;
+          // Cập nhật các bảng tĩnh
+          if (remote.REALMS_DB) GAME_DATA.realms = remote.REALMS_DB;
+          if (remote.MAPS_DB) GAME_DATA.maps = remote.MAPS_DB;
+          if (remote.MAP_SPAWN_DB) GAME_DATA.spawns = remote.MAP_SPAWN_DB;
+          if (remote.DROP_ITEMS_DB) GAME_DATA.drops = remote.DROP_ITEMS_DB;
+          if (remote.RECIPES_DB) GAME_DATA.recipes = remote.RECIPES_DB;
+          if (remote.SKILLS_DB) GAME_DATA.skills = remote.SKILLS_DB;
+
+          saveLocalGame();
+          refreshFullUI();
+          if (cloudEl) cloudEl.innerText = "☁️ Đã đồng bộ Sheet";
+          if (!silent) showNotice("✨ Đã tải trọn vẹn dữ liệu mới nhất từ Google Sheet của Sếp!");
+        })
+        .catch(err => {
+          if (cloudEl) cloudEl.innerText = "☁️ Chế độ Offline";
+          if (!silent) showNotice("⚠️ Đang chạy chế độ dữ liệu Offline trên máy.");
+        });
+    }
+
+    function saveLocalGame() {
+      localStorage.setItem("DAIDAO_TUTIEN_SAVE_V1", JSON.stringify(GAME_DATA));
+    }
+
+    // =========================================================================
+    // HỆ THỐNG LỰC CHIẾN CÂN BẰNG & TRANG BỊ TỨC THÌ (0ms)
+    // =========================================================================
+    function calculateTotalCombatPower() {
+      if (!GAME_DATA || !GAME_DATA.state) return 0;
+      const s = GAME_DATA.state;
+      const eqBonus = calculateEquipStatsBonus();
+
+      const hp = (Number(s.HP_MAX) || 0) + (eqBonus.HP || 0);
+      const mp = (Number(s.MP_MAX) || 0) + (eqBonus.MP || 0);
+      const atk = (Number(s.ATK) || 0) + (eqBonus.ATK || 0);
+      const def = (Number(s.DEF) || 0) + (eqBonus.DEF || 0);
+      const mdef = (Number(s.MDEF) || 0) + (eqBonus.MDEF || 0);
+
+      const spd = (Number(s.TOC_DO) || 0) + (eqBonus.TOC_DO || 0);
+      const crit = (Number(s.CRIT) || 0) + (eqBonus.CRIT || 0);
+      const eva = (Number(s.NE_TRANH) || 0) + (eqBonus.NE_TRANH || 0);
+
+      const basePower = (hp * 0.4) + (mp * 0.2) + (atk * 3.5) + ((def + mdef) * 2.0);
+      const multiplier = 1 + (crit * 0.005) + (eva * 0.004) + (spd * 0.003);
+
+      return Math.floor(basePower * multiplier);
+    }
+
+    function calculateEquipStatsBonus() {
+      let bonus = { HP: 0, MP: 0, ATK: 0, DEF: 0, MDEF: 0, TOC_DO: 0, CRIT: 0, NE_TRANH: 0 };
+      (GAME_DATA.equipment || []).forEach(item => {
+        if (!item.name || item.name === "(Trống)" || !item.stats) return;
+        const regex = /([A-Z_]+)\s*[\+\:]\s*(\d+)/gi;
+        let match;
+        while ((match = regex.exec(item.stats)) !== null) {
+          let k = match[1].toUpperCase();
+          let v = Number(match[2]);
+          if (bonus.hasOwnProperty(k)) bonus[k] += v;
+        }
+      });
+      return bonus;
+    }
+
+    function doEquip(slotId, itemName) {
+      const eq = (GAME_DATA.equipment || []).find(e => String(e.slotId) === String(slotId));
+      if (!eq) return;
+
+      const oldName = eq.name;
+      eq.name = itemName;
+
+      // Trừ vật phẩm trong túi đồ
+      const invItem = (GAME_DATA.inventory || []).find(it => it.name.toLowerCase() === itemName.toLowerCase());
+      if (invItem) {
+        invItem.qty -= 1;
+        if (invItem.qty <= 0) {
+          GAME_DATA.inventory = GAME_DATA.inventory.filter(it => it !== invItem);
+        }
+      }
+
+      // Đưa trang bị cũ vào lại túi
+      if (oldName && oldName !== "(Trống)") {
+        const targetSlotType = getSlotTypeCode(slotId);
+        const existOld = (GAME_DATA.inventory || []).find(it => it.name.toLowerCase() === oldName.toLowerCase());
+        if (existOld) {
+          existOld.qty += 1;
+        } else {
+          GAME_DATA.inventory.push({
+            name: oldName,
+            qty: 1,
+            type: "Trang Bị",
+            slotType: targetSlotType,
+            effect: "Trang bị đã tháo"
+          });
+        }
+      }
+
+      saveLocalGame();
+      renderEquipmentGrid();
+      selectSlotToEquip(slotId, eq.slotName);
+      refreshFullUI();
+      showNotice(`⚔️ Đã mặc [${itemName}] thành công!`);
+    }
+
+    function doUnequip(slotId, slotName) {
+      const eq = (GAME_DATA.equipment || []).find(e => String(e.slotId) === String(slotId));
+      if (!eq || eq.name === "(Trống)") return;
+
+      const unequippedItemName = eq.name;
+      eq.name = "(Trống)";
+
+      const targetSlotType = getSlotTypeCode(slotId);
+      const existItem = (GAME_DATA.inventory || []).find(it => it.name.toLowerCase() === unequippedItemName.toLowerCase());
+      if (existItem) {
+        existItem.qty += 1;
+      } else {
+        GAME_DATA.inventory.push({
+          name: unequippedItemName,
+          qty: 1,
+          type: "Trang Bị",
+          slotType: targetSlotType,
+          effect: "Trang bị đã tháo"
+        });
+      }
+
+      saveLocalGame();
+      renderEquipmentGrid();
+      selectSlotToEquip(slotId, slotName || eq.slotName);
+      refreshFullUI();
+      showNotice(`🛡️ Đã tháo [${unequippedItemName}] vào túi!`);
+    }
+
+    function getSlotTypeCode(slotId) {
+      const slotCodeMap = {
+        1: "HEAD", 2: "CHEST", 3: "LEFT_HAND", 4: "RIGHT_HAND", 5: "LEGS",
+        6: "FEET", 7: "RING", 8: "NECK", 9: "WEAPON", 10: "ARTIFACT"
+      };
+      return slotCodeMap[slotId] || "WEAPON";
+    }
+
+    // =========================================================================
+    // HÀNH ĐỘNG TU TIÊN CỐT LÕI (BẾ QUAN / XUẤT QUAN / ĐỘT PHÁ)
+    // =========================================================================
+    function doBequan() {
+      const s = GAME_DATA.state;
+      s.TRANG_THAI_TU_LUYEN = "DANG_TU_LUYEN";
+      s.THOI_GIAN_BAT_DAU_TU = new Date().toISOString();
+      s.THOI_GIAN_CAP_NHAT_CUOI = new Date().toISOString();
+      saveLocalGame();
+      refreshFullUI();
+      showNotice(`🧘‍♂️ <b>[BẾ QUAN NHẬP ĐỊNH]</b><br>Đạo hữu bắt đầu chuyên tâm vận chuyển chu thiên, tốc độ tu luyện gia tăng gấp 5 lần!`);
+    }
+
+    function doXuatquan() {
+      const s = GAME_DATA.state;
+      processOfflineAfk();
+      s.TRANG_THAI_TU_LUYEN = "BINH_THUONG";
+      saveLocalGame();
+      refreshFullUI();
+      showNotice(`✨ <b>[XUẤT QUAN VIÊN MÃN]</b><br>Đã thu nạp toàn bộ tu vi tích lũy, chuyển sang trạng thái tự nhiên hấp thu 24/7.`);
+    }
+
+    function doBreakthrough() {
+      const s = GAME_DATA.state;
+      const curTuVi = Number(s.TU_VI) || 0;
+      const maxTuVi = Number(s.TU_VI_MAX) || 1000;
+      const tang = Number(s.TANG) || 1;
+      const realm = s.CANH_GIOI || "Luyện Khí";
+
+      if (curTuVi < maxTuVi) {
+        showNotice(`⚠️ [CHƯA THỂ ĐỘT PHÁ]<br>Tu vi hiện tại (${curTuVi.toLocaleString()}/${maxTuVi.toLocaleString()}) chưa đạt bình cảnh viên mãn!`);
+        return;
+      }
+
+      // Tính tỷ lệ thành công
+      let baseRate = (tang >= 10) ? 65 : 95;
+      let pillBonus = 0;
+      let usedPill = null;
+
+      (GAME_DATA.inventory || []).forEach(it => {
+        if ((it.name || "").includes("Đan") && (it.effect || "").includes("đột phá") && it.qty > 0) {
+          pillBonus = 25;
+          usedPill = it;
+        }
+      });
+
+      let finalRate = Math.min(100, baseRate + pillBonus);
+      let roll = Math.random() * 100;
+
+      if (roll <= finalRate) {
+        // Thành công
+        if (usedPill) {
+          usedPill.qty -= 1;
+          if (usedPill.qty <= 0) GAME_DATA.inventory = GAME_DATA.inventory.filter(i => i !== usedPill);
+        }
+
+        let nextTang = tang + 1;
+        let nextRealm = realm;
+        if (nextTang > 10) {
+          nextTang = 1;
+          nextRealm = getNextRealm(realm);
+        }
+
+        s.CANH_GIOI = nextRealm;
+        s.TANG = nextTang;
+        s.TU_VI = curTuVi - maxTuVi;
+
+        // Cập nhật chỉ số từ bảng REALMS_DB
+        const rData = (GAME_DATA.realms || []).find(r => r.CANH_GIOI === nextRealm && Number(r.TANG) === nextTang);
+        if (rData) {
+          s.TU_VI_MAX = Number(rData.TU_VI_CAN) || Math.floor(maxTuVi * 1.5);
+          s.HP_MAX = Number(rData.HP_MAX) || (Number(s.HP_MAX) + 200);
+          s.HP = s.HP_MAX;
+          s.MP_MAX = Number(rData.MP_MAX) || (Number(s.MP_MAX) + 100);
+          s.MP = s.MP_MAX;
+          s.ATK = Number(rData.ATK) || (Number(s.ATK) + 30);
+          s.DEF = Number(rData.DEF) || (Number(s.DEF) + 15);
+          s.MDEF = Number(rData.MDEF) || (Number(s.MDEF) + 12);
+          s.TOC_DO = Number(rData.TOC_DO) || (Number(s.TOC_DO) + 2);
+        }
+
+        saveLocalGame();
+        refreshFullUI();
+        showNotice(`🔥 <b>[ĐỘT PHÁ THÀNH CÔNG!]</b><br>Thiên địa dị tượng, kinh mạch khai thông! Đạo hữu thăng cấp: <b>${nextRealm} (Tầng ${nextTang})</b>!`);
+      } else {
+        // Thất bại
+        let hpLoss = Math.floor((Number(s.HP_MAX) || 100) * 0.3);
+        let tuviLoss = Math.floor(curTuVi * 0.2);
+        s.HP = Math.max(1, (Number(s.HP) || 100) - hpLoss);
+        s.TU_VI = Math.max(0, curTuVi - tuviLoss);
+
+        saveLocalGame();
+        refreshFullUI();
+        showNotice(`💥 <b>[ĐỘT PHÁ THẤT BẠI]</b><br>Tâm ma quấy phá! Bị phản phệ tổn thương ${hpLoss} Khí Huyết và mất ${tuviLoss.toLocaleString()} Tu Vi!`);
+      }
+    }
+
+    function getNextRealm(curRealm) {
+      const ranks = [
+        "Luyện Tinh Hóa Khí", "Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", 
+        "Hóa Thần", "Luyện Hư", "Hợp Thể", "Đại Thừa", "Độ Kiếp",
+        "Nhân Tiên", "Địa Tiên", "Thiên Tiên", "Huyền Tiên", "Chân Tiên", 
+        "Kim Tiên", "Thái Ất Chân Tiên", "Thái Ất Kim Tiên", "Đại La Kim Tiên", 
+        "Cửu Thiên Huyền Tiên", "Tiên Vương", "Tiên Hoàng", "Tiên Đế",
+        "Bán Thần", "Hạ Vị Thần", "Trung Vị Thần", "Thượng Vị Thần", 
+        "Chân Thần", "Thần Vương", "Thần Hoàng", "Thần Tôn",
+        "Chuẩn Thánh", "Hỗn Nguyên Thánh Nhân", "Hỗn Độn Đạo Tổ", 
+        "Hồng Mông Chí Tôn", "Siêu Thoát Vô Thượng"
+      ];
+      let idx = ranks.findIndex(r => r.toLowerCase() === (curRealm || "").toLowerCase());
+      if (idx !== -1 && idx + 1 < ranks.length) return ranks[idx + 1];
+      return curRealm;
+    }
+
+    // =========================================================================
+    // HỆ THỐNG THU THẬP & SĂN QUÁI & CHIẾN ĐẤU LOCAL POKEMON
+    // =========================================================================
+    function doGather() {
+      const curLoc = GAME_DATA.state.VI_TRI_CHI_TIET || "Tân Thủ Thôn";
+      const spawns = (GAME_DATA.spawns || []).filter(s => s.TEN_DIA_DIEM === curLoc && s.LOAI_SPAWN === "TAI_NGUYEN");
+
+      if (spawns.length === 0) {
+        showNotice(`🌿 Tại [${curLoc}] không có linh thảo hay mỏ quặng nào khả dụng! Hãy di chuyển đến Hắc Phong Sâm Lâm.`);
+        return;
+      }
+
+      let gained = [];
+      spawns.forEach(res => {
+        if (Math.random() * 100 <= (Number(res.TY_LE_GAP) || 60)) {
+          let drops = (GAME_DATA.drops || []).filter(d => d.MA_SPAWN === res.MA_SPAWN);
+          drops.forEach(d => {
+            if (Math.random() * 100 <= (Number(d.TY_LE_DROP) || 50)) {
+              let qty = Math.floor(Math.random() * ((Number(d.SO_LUONG_MAX) || 1) - (Number(d.SO_LUONG_MIN) || 1) + 1)) + (Number(d.SO_LUONG_MIN) || 1);
+              gained.push({ name: d.TEN_VAT_PHAM, qty: qty, effect: d.CONG_DUNG, type: d.LOAI_DO });
+            }
+          });
+        }
+      });
+
+      if (gained.length > 0) {
+        gained.forEach(g => addItemToInventory(g.name, g.qty, g.type, "-", g.effect));
+        saveLocalGame();
+        refreshFullUI();
+        let logText = gained.map(g => `• +${g.qty}x <b>${g.name}</b>`).join("<br>");
+        showNotice(`🌿 <b>[THU THẬP THÀNH CÔNG]</b><br>${logText}`);
+      } else {
+        showNotice(`🍃 Đạo hữu tìm kiếm xung quanh ${curLoc} nhưng lần này linh khí tan loãng, không thu hoạch được gì.`);
+      }
+    }
+
+    function doHuntMonster() {
+      const curLoc = GAME_DATA.state.VI_TRI_CHI_TIET || "Tân Thủ Thôn";
+      const monsters = (GAME_DATA.spawns || []).filter(s => s.TEN_DIA_DIEM === curLoc && (s.LOAI_SPAWN === "QUAI_THUONG" || s.LOAI_SPAWN === "BOSS"));
+
+      if (monsters.length === 0) {
+        showNotice(`🛡️ [KHU AN TOÀN]: Tại [${curLoc}] thanh bình không có yêu thú. Hãy qua Hắc Phong Sâm Lâm!`);
+        return;
+      }
+
+      let target = monsters[Math.floor(Math.random() * monsters.length)];
+      let isBoss = target.LOAI_SPAWN === "BOSS";
+      let bHp = isBoss ? 2500 : 800;
+      let bAtk = isBoss ? 150 : 60;
+      let bDef = isBoss ? 60 : 25;
+
+      ACTIVE_COMBAT = {
+        bossName: target.TEN_HIEN_THI,
+        spawnId: target.MA_SPAWN,
+        bossHp: bHp,
+        bossMaxHp: bHp,
+        bossAtk: bAtk,
+        bossDef: bDef,
+        isBoss: isBoss
+      };
+
+      openCombatModal();
+    }
+
+    function openCombatModal() {
+      if (!ACTIVE_COMBAT) return;
+      document.getElementById("c-boss-name").innerText = (ACTIVE_COMBAT.isBoss ? "👑 " : "🐺 ") + ACTIVE_COMBAT.bossName;
+      document.getElementById("c-player-name").innerText = GAME_DATA.state.TEN_NHAN_VAT || "Tử Đoan";
+      
+      updateCombatUI();
+      renderCombatSkills();
+      document.getElementById("combat-log").innerHTML = `⚔️ Trận chiến bắt đầu! Đối đầu với [${ACTIVE_COMBAT.bossName}]!`;
+      openModal("combat-modal");
+    }
+
+    function renderCombatSkills() {
+      const box = document.getElementById("combat-skill-buttons");
+      box.innerHTML = "";
+      const skills = (GAME_DATA.skills || []).filter(s => s.DUNG_CHO === "NguoiChoi");
+
+      skills.forEach(sk => {
+        let btn = document.createElement("button");
+        btn.className = "act-btn primary";
+        btn.style.fontSize = "10.5px";
+        btn.style.padding = "6px 4px";
+        btn.innerText = `${sk.TEN_SKILL} (${sk.MP_TIEU_HAO} MP)`;
+        btn.onclick = () => executeCombatTurn(sk);
+        box.appendChild(btn);
+      });
+    }
+
+    function executeCombatTurn(skill) {
+      if (!ACTIVE_COMBAT) return;
+      const s = GAME_DATA.state;
+      const eqBonus = calculateEquipStatsBonus();
+      const pAtk = (Number(s.ATK) || 50) + (eqBonus.ATK || 0);
+      const pDef = (Number(s.DEF) || 20) + (eqBonus.DEF || 0);
+      let curHp = Number(s.HP) || 100;
+      let curMp = Number(s.MP) || 50;
+
+      let logEl = document.getElementById("combat-log");
+      let dmg = 0;
+
+      // Người chơi đánh
+      if (skill) {
+        if (curMp < Number(skill.MP_TIEU_HAO)) {
+          logEl.innerHTML = `<span style="color:#ef4444;">⚠️ Linh lực (MP) không đủ!</span><br>` + logEl.innerHTML;
+          return;
+        }
+        curMp -= Number(skill.MP_TIEU_HAO);
+        s.MP = curMp;
+        let rate = (Number(skill.HE_SO_DMG) || 100) / 100;
+        dmg = Math.max(10, Math.floor((pAtk * rate) - (ACTIVE_COMBAT.bossDef * 0.4)));
+        ACTIVE_COMBAT.bossHp = Math.max(0, ACTIVE_COMBAT.bossHp - dmg);
+        logEl.innerHTML = `⚔️ Bạn thi triển [${skill.TEN_SKILL}], gây <b style="color:#f59e0b;">${dmg}</b> sát thương!<br>` + logEl.innerHTML;
+      } else {
+        dmg = Math.max(5, Math.floor(pAtk - (ACTIVE_COMBAT.bossDef * 0.5)));
+        ACTIVE_COMBAT.bossHp = Math.max(0, ACTIVE_COMBAT.bossHp - dmg);
+        logEl.innerHTML = `👊 Bạn tung đòn thường, gây <b style="color:#f59e0b;">${dmg}</b> sát thương!<br>` + logEl.innerHTML;
+      }
+
+      // Kiểm tra Boss chết
+      if (ACTIVE_COMBAT.bossHp <= 0) {
+        handleCombatVictory();
+        return;
+      }
+
+      // Quái phản công
+      let bossDmg = Math.max(5, Math.floor(ACTIVE_COMBAT.bossAtk - (pDef * 0.4)));
+      curHp = Math.max(0, curHp - bossDmg);
+      s.HP = curHp;
+      logEl.innerHTML = `🔥 ${ACTIVE_COMBAT.bossName} phản kích, đánh trúng <b style="color:#ef4444;">${bossDmg}</b> sát thương!<br>` + logEl.innerHTML;
+
+      if (curHp <= 0) {
+        logEl.innerHTML = `💀 <b>Đạo tiêu thân tàn! Độn thổ về làng trị thương!</b><br>` + logEl.innerHTML;
+        s.HP = Math.floor(Number(s.HP_MAX) * 0.5);
+        saveLocalGame();
+        refreshFullUI();
+        setTimeout(() => closeModal("combat-modal"), 1500);
+        return;
+      }
+
+      updateCombatUI();
+      saveLocalGame();
+      refreshFullUI();
+    }
+
+    function handleCombatVictory() {
+      const s = GAME_DATA.state;
+      let rewTuvi = ACTIVE_COMBAT.isBoss ? 5000 : 1200;
+      let rewStone = ACTIVE_COMBAT.isBoss ? 60 : 15;
+
+      s.TU_VI = (Number(s.TU_VI) || 0) + rewTuvi;
+      s.LINH_THACH = (Number(s.LINH_THACH) || 0) + rewStone;
+
+      // Rơi đồ từ DROP_ITEMS_DB
+      let dropped = [];
+      let drops = (GAME_DATA.drops || []).filter(d => d.MA_SPAWN === ACTIVE_COMBAT.spawnId);
+      drops.forEach(d => {
+        if (Math.random() * 100 <= (Number(d.TY_LE_DROP) || 40)) {
+          let q = Math.floor(Math.random() * ((Number(d.SO_LUONG_MAX) || 1) - (Number(d.SO_LUONG_MIN) || 1) + 1)) + (Number(d.SO_LUONG_MIN) || 1);
+          addItemToInventory(d.TEN_VAT_PHAM, q, d.LOAI_DO, "-", d.CONG_DUNG);
+          dropped.push(`+${q}x ${d.TEN_VAT_PHAM}`);
+        }
+      });
+
+      saveLocalGame();
+      refreshFullUI();
+
+      let dropMsg = dropped.length > 0 ? ("<br>🎁 Rơi: " + dropped.join(", ")) : "";
+      showNotice(`🎉 <b>[CHIẾN THẮNG]</b> Chém chết ${ACTIVE_COMBAT.bossName}!<br>+${rewTuvi} Tu Vi | +${rewStone} Linh Thạch${dropMsg}`);
+      closeModal("combat-modal");
+      ACTIVE_COMBAT = null;
+    }
+
+    function fleeCombat() {
+      closeModal("combat-modal");
+      ACTIVE_COMBAT = null;
+      showNotice("🏃‍♂️ Đạo hữu thi triển súc địa thành thốn đào thoát an toàn!");
+    }
+
+    function updateCombatUI() {
+      if (!ACTIVE_COMBAT) return;
+      const s = GAME_DATA.state;
+      let bPct = Math.max(0, Math.floor((ACTIVE_COMBAT.bossHp / ACTIVE_COMBAT.bossMaxHp) * 100));
+      document.getElementById("c-boss-hp-fill").style.width = bPct + "%";
+      document.getElementById("c-boss-hp-text").innerText = `${ACTIVE_COMBAT.bossHp} / ${ACTIVE_COMBAT.bossMaxHp}`;
+
+      let pMaxHp = Number(s.HP_MAX) || 100;
+      let pCurHp = Number(s.HP) || 100;
+      let pPct = Math.max(0, Math.floor((pCurHp / pMaxHp) * 100));
+      document.getElementById("c-player-hp-fill").style.width = pPct + "%";
+      document.getElementById("c-player-hp-text").innerText = `${pCurHp} / ${pMaxHp}`;
+    }
+
+    function addItemToInventory(name, qty, category = "Trang Bị", slotType = "-", effect = "") {
+      let exist = (GAME_DATA.inventory || []).find(i => i.name.toLowerCase() === name.toLowerCase());
+      if (exist) {
+        exist.qty += qty;
+      } else {
+        GAME_DATA.inventory.push({
+          name: name,
+          qty: qty,
+          type: category,
+          slotType: slotType,
+          effect: effect
+        });
+      }
+    }
+
+    // =========================================================================
+    // RENDER UI & MODAL UTILITIES
+    // =========================================================================
+    function refreshFullUI() {
+      if (!GAME_DATA || !GAME_DATA.state) return;
+      const s = GAME_DATA.state;
+
+      document.getElementById("ui-char-name").innerText = s.TEN_NHAN_VAT || "Tử Đoan";
+      document.getElementById("ui-realm").innerText = `${s.CANH_GIOI || 'Luyện Khí'} (Tầng ${s.TANG || 1})`;
+      document.getElementById("ui-stone").innerText = (s.LINH_THACH || 0).toLocaleString();
+      document.getElementById("ui-gem").innerText = (s.TIEN_NGOC || 0).toLocaleString();
+      document.getElementById("ui-vidien").innerText = s.VI_DIEN || "Phàm Nhân Giới";
+      document.getElementById("ui-sect").innerText = s.VI_TRI_CHI_TIET || "Tân Thủ Thôn";
+
+      const curTuVi = Number(s.TU_VI) || 0;
+      const maxTuVi = Number(s.TU_VI_MAX) || 1000;
+      const pct = Math.min(100, Math.floor((curTuVi / maxTuVi) * 100));
+      document.getElementById("ui-exp-text").innerText = `${curTuVi.toLocaleString()} / ${maxTuVi.toLocaleString()}`;
+      document.getElementById("ui-exp-percent").innerText = pct + "%";
+      document.getElementById("ui-exp-fill").style.width = pct + "%";
+
+      const isBequan = s.TRANG_THAI_TU_LUYEN === "DANG_TU_LUYEN";
+      document.getElementById("ui-afk-status").innerText = isBequan ? "🧘‍♂️ Đang Bế Quan (x5)" : "🍃 Tự Nhiên Hấp Thu 24/7";
+      document.getElementById("ui-afk-status").style.color = isBequan ? "#ffbe76" : "#5cdbd3";
+      document.getElementById("ui-afk-speed").innerText = `+${calculateAfkSpeedPerMin().toLocaleString()} tu vi/phút`;
+
+      document.getElementById("ui-power-val").innerText = calculateTotalCombatPower().toLocaleString();
+
+      if (s.BACKGROUND_URL) document.getElementById("ui-hero-stage").style.backgroundImage = `url('${s.BACKGROUND_URL}')`;
+      if (s.AVATAR_URL) document.getElementById("ui-avatar-img").src = s.AVATAR_URL;
+
+      renderMapList();
+      renderInventoryList();
+      renderSkillsList();
+      renderRecipesList();
+    }
+
+    function openEquipModal() {
+      renderEquipmentGrid();
+      openModal('equip-modal');
+    }
+
+    function renderEquipmentGrid() {
+      const box = document.getElementById("equip-slots-box");
+      box.innerHTML = "";
+      const equipment = GAME_DATA.equipment || [];
+
+      equipment.forEach(eq => {
+        let isEquipped = eq.name && eq.name !== "(Trống)";
+        let card = document.createElement("div");
+        card.className = "equip-slot-card";
+        if (String(CURRENT_SELECTED_SLOT_ID) === String(eq.slotId)) card.classList.add("active");
+
+        card.onclick = () => selectSlotToEquip(eq.slotId, eq.slotName);
+
+        card.innerHTML = `
+          <div class="slot-type-header">
+            <span>${eq.slotName}</span>
+            <span style="font-size: 9.5px; color: #94a3b8;">${isEquipped ? eq.quality : ''}</span>
+          </div>
+          <div class="${isEquipped ? 'slot-item-name' : 'slot-item-empty'}">
+            ${isEquipped ? eq.name : '(Trống)'}
+          </div>
+          <div class="slot-btn-row">
+            ${isEquipped ? `<button class="mini-btn" onclick="event.stopPropagation(); doUnequip(${eq.slotId}, '${eq.slotName}')">Tháo</button>` : `<button class="mini-btn" style="color:var(--gold-bright);">Đổi</button>`}
+          </div>
+        `;
+        box.appendChild(card);
+      });
+    }
+
+    function selectSlotToEquip(slotId, slotName) {
+      CURRENT_SELECTED_SLOT_ID = slotId;
+      renderEquipmentGrid();
+
+      const panel = document.getElementById("equip-selector-panel");
+      const title = document.getElementById("selected-slot-title");
+      const itemsBox = document.getElementById("available-items-box");
+      
+      panel.style.display = "block";
+      title.innerText = slotName;
+      itemsBox.innerHTML = "";
+
+      const targetCode = getSlotTypeCode(slotId);
+      const invItems = (GAME_DATA.inventory || []).filter(it => {
+        if (!it.slotType) return false;
+        if (targetCode === "LEFT_HAND" || targetCode === "RIGHT_HAND") {
+          return it.slotType === targetCode || it.slotType === "HAND";
+        }
+        return it.slotType === targetCode;
+      });
+
+      if (invItems.length === 0) {
+        itemsBox.innerHTML = `<p style="color:#64748b; font-size:11px; padding:10px 0; text-align:center;">Túi đồ không có trang bị phù hợp với [${slotName}]!</p>`;
+        return;
+      }
+
+      invItems.forEach(it => {
+        let row = document.createElement("div");
+        row.className = "map-row";
+        row.innerHTML = `
+          <div>
+            <div style="color:var(--gold-bright); font-size:11.5px; font-weight:600;">${it.name} <span style="color:#94a3b8; font-size:10px;">x${it.qty}</span></div>
+            <div style="font-size:10.5px; color:#94a3b8;">${it.effect || 'Gia tăng chỉ số'}</div>
+          </div>
+          <button class="act-btn primary" style="padding:4px 10px; font-size:10.5px;" onclick="doEquip(${slotId}, '${it.name}')">Mặc</button>
+        `;
+        itemsBox.appendChild(row);
+      });
+    }
+
+    function renderMapList() {
+      const box = document.getElementById("map-list-container");
+      box.innerHTML = "";
+      const curVidien = GAME_DATA.state.VI_DIEN || "Phàm Nhân Giới";
+      const maps = (GAME_DATA.maps || []).filter(m => m.VI_DIEN === curVidien);
+
+      maps.forEach(m => {
+        let isHere = (GAME_DATA.state.VI_TRI_CHI_TIET === m.TEN_DIA_DIEM);
+        let row = document.createElement("div");
+        row.className = "map-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:${isHere ? '#f3e5ab' : '#f8fafc'}">
+              ${m.TEN_DIA_DIEM} <span style="font-size:10px; color:#64748b;">(${m.KHU_VUC})</span>
+            </div>
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">${m.LOAI_HINH} • Cần: ${m.CANH_GIOI_YEU_CAU}</div>
+          </div>
+          <button class="act-btn" style="padding:5px 12px; font-size:10.5px; ${isHere ? 'opacity:0.4; pointer-events:none;' : ''}" 
+                  onclick="travelTo('${m.TEN_DIA_DIEM}')">
+            ${isHere ? 'Hiện tại' : 'Ngự Kiếm'}
+          </button>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function travelTo(mapName) {
+      GAME_DATA.state.VI_TRI_CHI_TIET = mapName;
+      saveLocalGame();
+      refreshFullUI();
+      closeModal('map-modal');
+      showNotice(`📍 Ngự kiếm phi hành đến an toàn: <b>${mapName}</b>!`);
+    }
+
+    function renderInventoryList() {
+      const box = document.getElementById("inv-list-container");
+      box.innerHTML = "";
+      const items = GAME_DATA.inventory || [];
+      if (items.length === 0) {
+        box.innerHTML = `<p style="text-align:center; color:#64748b; padding:20px;">Túi trữ vật rỗng tuếch!</p>`;
+        return;
+      }
+      items.forEach(it => {
+        let row = document.createElement("div");
+        row.className = "map-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:#f3e5ab;">${it.name} <span style="color:#94a3b8; font-size:10.5px;">x${it.qty}</span></div>
+            <div style="font-size:10.5px; color:#64748b; margin-top:2px;">${it.type || 'Vật phẩm'} • ${it.effect || ''}</div>
+          </div>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function renderSkillsList() {
+      const box = document.getElementById("skills-list-container");
+      box.innerHTML = "";
+      const skills = (GAME_DATA.skills || []).filter(s => s.DUNG_CHO === "NguoiChoi");
+      skills.forEach(sk => {
+        let row = document.createElement("div");
+        row.className = "map-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:var(--cyan-soft);">${sk.TEN_SKILL} <span style="font-size:10px; color:#94a3b8;">(Cấp ${sk.CAP_DO})</span></div>
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">Loại: ${sk.LOAI} | Sát thương: ${sk.HE_SO_DMG}% | Tiêu hao: ${sk.MP_TIEU_HAO} MP</div>
+          </div>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function renderRecipesList() {
+      const box = document.getElementById("recipes-list-container");
+      box.innerHTML = "";
+      const recipes = GAME_DATA.recipes || [];
+      recipes.forEach(rc => {
+        let row = document.createElement("div");
+        row.className = "map-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600; color:var(--gold-bright);">${rc.TEN_THANH_PHAM} <span style="font-size:10px; color:#10b981;">(${rc.LOAI})</span></div>
+            <div style="font-size:10.5px; color:#94a3b8; margin-top:2px;">Cần: ${rc.NGUYEN_LIEU_YEU_CAU}</div>
+            <div style="font-size:10px; color:#64748b;">${rc.CONG_DUNG}</div>
+          </div>
+          <button class="act-btn primary" style="padding:4px 10px; font-size:10px;" onclick="showNotice('Lô đan đang chuẩn bị lửa linh...')">Khai Lô</button>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function showStatsModal() {
+      const s = GAME_DATA.state;
+      const box = document.getElementById("stats-content");
+      box.innerHTML = `
+        <div style="line-height: 2.1; padding: 4px; color:#cbd5e1;">
+          <p>Lực Chiến: <b style="color:#fbbf24; font-size:13.5px;">${calculateTotalCombatPower().toLocaleString()}</b></p>
+          <p>Đạo Hiệu: <b style="color:#f3e5ab;">${s.TEN_NHAN_VAT}</b></p>
+          <p>Cảnh Giới: <b style="color:#5cdbd3;">${s.CANH_GIOI} (Tầng ${s.TANG})</b></p>
+          <p>Khí Huyết (HP): <b>${s.HP} / ${s.HP_MAX}</b></p>
+          <p>Linh Lực (MP): <b>${s.MP} / ${s.MP_MAX}</b></p>
+          <p>Công Kích (ATK): <b>${s.ATK}</b></p>
+          <p>Phòng Ngự (DEF): <b>${s.DEF}</b></p>
+          <p>Kháng Phép (MDEF): <b>${s.MDEF || 10}</b></p>
+          <p>Thân Pháp: <b>${s.TOC_DO || 10}</b></p>
+          <p>Bạo Kích: <b>${s.CRIT || 0}%</b> | Né Tránh: <b>${s.NE_TRANH || 0}%</b></p>
+          <p>Luân Hồi: <b>Kiếp thứ ${s.LAN_TRUNG_SINH || 0}</b></p>
+        </div>
+      `;
+      openModal('stats-modal');
+    }
+
+    function exportSaveGame() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(GAME_DATA));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `DaiDaoTuTien_Save_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showNotice("💾 Đã xuất file Save Tiên Duyên về máy an toàn!");
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = "flex"; }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    function showNotice(msg) { document.getElementById("ui-status-text").innerHTML = msg; }
+    function toggleDrawer(drawerId) {
+      const target = document.getElementById(drawerId);
+      const isOpen = target.classList.contains("open");
+      closeAllDrawers();
+      if (!isOpen) target.classList.add("open");
+    }
+    function closeAllDrawers() {
+      document.querySelectorAll(".drawer-panel").forEach(p => p.classList.remove("open"));
+    }
+
+    // Tự động kích hoạt khi mở trang
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initH5Engine);
+    } else {
+      initH5Engine();
+    }
+  </script>
+</body>
+</html>
